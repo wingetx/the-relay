@@ -1,8 +1,8 @@
-import initSqlJs, { Database as SqlJsDatabase } from "sql.js";
+import initSqlJs from "sql.js";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import type { VoiceboxEvent, Filter } from "./types.js";
 
-let db: SqlJsDatabase;
+let db: any;
 let dbPath: string;
 
 export async function initDb(path = "voicebox-relay.db") {
