@@ -40,21 +40,33 @@ class RelayClient {
     if (this.connectPromise) return this.connectPromise;
 
     this.connectPromise = new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const settle = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        fn();
+      };
       const timer = setTimeout(() => {
         this.connectPromise = null;
-        reject(new Error(`WebSocket connection timed out: ${this.url}`));
+        settle(() => reject(new Error(`WebSocket connection timed out: ${this.url}`)));
       }, 10000);
-      this.doConnect(() => { clearTimeout(timer); resolve(); });
+      this.doConnect(
+        () => settle(() => resolve()),
+        () => settle(() => { this.connectPromise = null; reject(new Error(`WebSocket failed to connect: ${this.url}`)); })
+      );
     });
 
     return this.connectPromise;
   }
 
-  private doConnect(onOpen?: () => void) {
+  private doConnect(onOpen?: () => void, onFail?: () => void) {
+    let didOpen = false;
     try {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
+        didOpen = true;
         this.connected = true;
         this.connectPromise = null;
         onOpen?.();
@@ -88,6 +100,7 @@ class RelayClient {
       this.ws.onclose = () => {
         this.connected = false;
         this.connectPromise = null;
+        if (!didOpen) onFail?.();
         this.scheduleReconnect();
       };
 
@@ -95,6 +108,7 @@ class RelayClient {
         // onclose fires next; nothing to do here
       };
     } catch {
+      onFail?.();
       this.scheduleReconnect();
     }
   }
