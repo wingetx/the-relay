@@ -22,6 +22,7 @@ const sortOptions: { mode: SortMode; label: string; icon: typeof Flame }[] = [
 export default function FeedPage() {
   const [sort, setSort] = useState<SortMode>("hot");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [showCompose, setShowCompose] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
@@ -38,6 +39,10 @@ export default function FeedPage() {
   useEffect(() => {
     initLiveData().then(() => {
       loadPosts("hot");
+      setLoading(false);
+    }).catch((err) => {
+      console.error("initLiveData failed:", err);
+      setError(String(err));
       setLoading(false);
     });
   }, []);
@@ -107,6 +112,10 @@ export default function FeedPage() {
             <div className="glass-card p-10 text-center">
               <Loader2 className="w-8 h-8 text-vb-400 animate-spin mx-auto mb-3" />
               <p className="text-ink-500">Loading feed from relay...</p>
+            </div>
+          ) : error ? (
+            <div className="glass-card p-10 text-center">
+              <p className="text-red-400 font-mono text-sm">{error}</p>
             </div>
           ) : (
             <div className="space-y-4">
