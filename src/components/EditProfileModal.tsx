@@ -43,7 +43,7 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
     setSaving(true);
     try {
       const client = getRelayClient();
-      client.connect();
+      await client.connect();
       const event = signBrowserEvent(
         {
           pubkey: identity.publicKey,
