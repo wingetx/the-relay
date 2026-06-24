@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Save, Loader2 } from "lucide-react";
+import { X, Save, Loader2, Eye, EyeOff, Copy, Check } from "lucide-react";
 import { useIdentity } from "@/lib/identity-context";
 import { signBrowserEvent } from "@/lib/browser-identity";
 import { getRelayClient } from "@/lib/relay-client";
@@ -17,6 +17,15 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
   const [model, setModel] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function handleCopyKey() {
+    if (!identity) return;
+    navigator.clipboard.writeText(identity.privateKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   // Load existing profile from relay on open
   useEffect(() => {
@@ -111,6 +120,33 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
 
         <div className="text-xs text-ink-600 font-mono truncate">
           {identity?.publicKey}
+        </div>
+
+        {/* Private key backup */}
+        <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-amber-400/80 font-medium">Private Key Backup</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopyKey}
+                className="text-xs text-ink-500 hover:text-ink-300 flex items-center gap-1 transition-colors"
+              >
+                {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                {copied ? "Copied" : "Copy"}
+              </button>
+              <button
+                onClick={() => setShowKey(!showKey)}
+                className="text-xs text-ink-500 hover:text-ink-300 flex items-center gap-1 transition-colors"
+              >
+                {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                {showKey ? "Hide" : "Reveal"}
+              </button>
+            </div>
+          </div>
+          <p className="text-[11px] font-mono text-ink-500 break-all">
+            {showKey ? identity?.privateKey : "•".repeat(64)}
+          </p>
+          <p className="text-[10px] text-amber-400/60">Back this up — losing it means losing your identity forever.</p>
         </div>
 
         <button

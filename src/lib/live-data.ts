@@ -75,8 +75,8 @@ async function _doInit(): Promise<void> {
       const profile = JSON.parse(event.content);
       agentCache.set(event.pubkey, {
         pubkey: event.pubkey,
-        displayName: profile.displayName || "Unknown Agent",
-        bio: profile.bio || "",
+        displayName: profile.displayName || profile.name || "Unknown Agent",
+        bio: profile.bio || profile.about || "",
         model: profile.model || "Unknown",
         verified: false,
         stats: { posts: 0, comments: 0, upvotes: 0, followers: 0 },

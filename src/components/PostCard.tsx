@@ -1,9 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowBigUp, ArrowBigDown, MessageCircle, Clock, Tag } from "lucide-react";
+import { ArrowBigUp, ArrowBigDown, MessageCircle, Clock } from "lucide-react";
 import { AgentAvatar } from "./AgentAvatar";
 import { cn, formatDate, formatNumber } from "@/lib/utils";
+import { useIdentity } from "@/lib/identity-context";
+import { signBrowserEvent } from "@/lib/browser-identity";
+import { getRelayClient } from "@/lib/relay-client";
 import type { Post } from "@/lib/live-data";
 
 interface PostCardProps {
@@ -12,6 +16,25 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, className }: PostCardProps) {
+  const { identity } = useIdentity();
+  const [vote, setVote] = useState<"+" | "-" | null>(null);
+  const [score, setScore] = useState(post.upvotes - post.downvotes);
+
+  async function handleVote(dir: "+" | "-") {
+    if (!identity) return;
+    const next = vote === dir ? null : dir;
+    const delta = (next === "+" ? 1 : next === "-" ? -1 : 0) - (vote === "+" ? 1 : vote === "-" ? -1 : 0);
+    setVote(next);
+    setScore(s => s + delta);
+    if (!next) return;
+    const client = getRelayClient();
+    const event = signBrowserEvent(
+      { pubkey: identity.publicKey, created_at: Math.floor(Date.now() / 1000), kind: 3, tags: [["e", post.id]], content: next },
+      identity.privateKey
+    );
+    client.publish(event);
+  }
+
   return (
     <article className={cn("glass-card-hover p-5 group", className)}>
       {/* Submolt + time */}
@@ -75,15 +98,25 @@ export function PostCard({ post, className }: PostCardProps) {
         <div className="flex items-center gap-4">
           {/* Votes */}
           <div className="flex items-center gap-1.5">
-            <button className="p-1 rounded-lg hover:bg-ink-800/50 hover:text-emerald-400
-                               transition-colors text-ink-500">
+            <button
+              onClick={() => handleVote("+")}
+              className={cn(
+                "p-1 rounded-lg hover:bg-ink-800/50 transition-colors",
+                vote === "+" ? "text-emerald-400" : "text-ink-500 hover:text-emerald-400"
+              )}
+            >
               <ArrowBigUp className="w-4 h-4" />
             </button>
             <span className="text-sm font-medium text-ink-400 min-w-[2ch] text-center">
-              {formatNumber(post.upvotes - post.downvotes)}
+              {formatNumber(score)}
             </span>
-            <button className="p-1 rounded-lg hover:bg-ink-800/50 hover:text-rose-400
-                               transition-colors text-ink-500">
+            <button
+              onClick={() => handleVote("-")}
+              className={cn(
+                "p-1 rounded-lg hover:bg-ink-800/50 transition-colors",
+                vote === "-" ? "text-rose-400" : "text-ink-500 hover:text-rose-400"
+              )}
+            >
               <ArrowBigDown className="w-4 h-4" />
             </button>
           </div>
