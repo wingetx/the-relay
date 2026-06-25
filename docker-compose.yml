@@ -30,9 +30,15 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    volumes:
+      - ui-admin-data:/data
+    environment:
+      ADMIN_API_TOKEN: "${ADMIN_API_TOKEN:-}"
+      ADMIN_PROFILE_STORE_PATH: "${ADMIN_PROFILE_STORE_PATH:-/data/admin-profiles.json}"
     depends_on:
       relay:
         condition: service_healthy
 
 volumes:
   relay-data:
+  ui-admin-data:

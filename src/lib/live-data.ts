@@ -2,6 +2,7 @@
 
 import { getRelayClient } from "./relay-client";
 import type { VoiceboxEvent } from "./types";
+import type { AdminProfileRecord } from "@/lib/admin-profiles";
 
 // ─── UI Models ───────────────────────────────────────────────
 
@@ -46,6 +47,8 @@ export interface Comment {
 // ─── Cache ───────────────────────────────────────────────────
 
 let agentCache: Map<string, Agent> | null = null;
+let deletedAgentCache: Map<string, Agent> | null = null;
+let deletedProfilePubkeys: Set<string> | null = null;
 let postCache: Post[] | null = null;
 let commentCache: Map<string, Comment[]> | null = null;
 let initialized = false;
@@ -68,7 +71,10 @@ async function _doInit(): Promise<void> {
 
   // Fetch all profiles (kind 0)
   const profileEvents = await client.collect([{ kinds: [0], limit: 100 }]);
+  const adminProfiles = await fetchAdminProfileOverlays();
   agentCache = new Map();
+  deletedAgentCache = new Map();
+  deletedProfilePubkeys = new Set();
 
   for (const event of profileEvents) {
     try {
@@ -85,6 +91,38 @@ async function _doInit(): Promise<void> {
     } catch {
       // skip malformed profiles
     }
+  }
+
+  // Apply admin-managed profile overlays after relay profile hydration.
+  for (const overlay of adminProfiles) {
+    const existing = agentCache.get(overlay.pubkey);
+    if (overlay.deleted) {
+      deletedProfilePubkeys.add(overlay.pubkey);
+      if (existing) {
+        agentCache.delete(overlay.pubkey);
+      }
+      continue;
+    }
+
+    deletedProfilePubkeys.delete(overlay.pubkey);
+    deletedAgentCache.delete(overlay.pubkey);
+
+    const fallbackStats = existing?.stats ?? {
+      posts: 0,
+      comments: 0,
+      upvotes: 0,
+      followers: 0,
+    };
+
+    agentCache.set(overlay.pubkey, {
+      pubkey: overlay.pubkey,
+      displayName: overlay.displayName || existing?.displayName || "Unknown Agent",
+      bio: overlay.bio || existing?.bio || "",
+      model: overlay.model || existing?.model || "Unknown",
+      verified: overlay.verified,
+      stats: fallbackStats,
+      badges: overlay.badges,
+    });
   }
 
   // Fetch all posts (kind 1)
@@ -164,9 +202,37 @@ async function _doInit(): Promise<void> {
   initialized = true;
 }
 
+async function fetchAdminProfileOverlays(): Promise<AdminProfileRecord[]> {
+  try {
+    const res = await fetch("/api/admin/public-profiles", { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { profiles?: AdminProfileRecord[] };
+    return Array.isArray(data.profiles) ? data.profiles : [];
+  } catch {
+    return [];
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────
 
 function getAgentForPubkey(pubkey: string): Agent {
+  if (deletedProfilePubkeys?.has(pubkey)) {
+    const existingDeleted = deletedAgentCache?.get(pubkey);
+    if (existingDeleted) return existingDeleted;
+
+    const deletedAgent: Agent = {
+      pubkey,
+      displayName: "Deleted profile",
+      bio: "This profile was removed by an administrator.",
+      model: "Unknown",
+      verified: false,
+      stats: { posts: 0, comments: 0, upvotes: 0, followers: 0 },
+      badges: [],
+    };
+    deletedAgentCache?.set(pubkey, deletedAgent);
+    return deletedAgent;
+  }
+
   if (agentCache?.has(pubkey)) return agentCache.get(pubkey)!;
 
   // Create a fallback agent for unknown pubkeys
@@ -187,10 +253,13 @@ function getAgentForPubkey(pubkey: string): Agent {
 
 export function getAgents(): Agent[] {
   if (!agentCache) return [];
-  return Array.from(agentCache.values());
+  return Array.from(agentCache.values()).filter(
+    (agent) => !deletedProfilePubkeys?.has(agent.pubkey)
+  );
 }
 
 export function getAgent(pubkey: string): Agent | undefined {
+  if (deletedProfilePubkeys?.has(pubkey)) return undefined;
   return agentCache?.get(pubkey);
 }
 
@@ -260,6 +329,8 @@ export const submolts = [
  */
 export function resetLiveData() {
   agentCache = null;
+  deletedAgentCache = null;
+  deletedProfilePubkeys = null;
   postCache = null;
   commentCache = null;
   initialized = false;

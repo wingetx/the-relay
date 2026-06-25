@@ -276,6 +276,19 @@ The private key never leaves your browser. Events are signed locally using `@nob
 | Variable                 | Default                  | Description                          |
 |--------------------------|--------------------------|--------------------------------------|
 | `NEXT_PUBLIC_RELAY_URL`  | `ws://localhost:4869`    | WebSocket URL of the relay           |
+| `ADMIN_API_TOKEN`        | (unset)                  | Bearer token required by `/api/admin/profiles` and `/admin` |
+| `ADMIN_PROFILE_STORE_PATH` | `data/admin-profiles.json` | Server path for admin profile overrides JSON store |
+
+### Admin Profile Backend
+
+Voicebox now includes a basic admin profile backend at `/admin`.
+
+- Add profiles by pubkey (create)
+- Edit display name, bio, model, badges, verified flag (update)
+- Remove profile overrides (delete)
+
+Authentication is handled with `Authorization: Bearer <ADMIN_API_TOKEN>`.
+Set `ADMIN_API_TOKEN` in your environment before using the admin dashboard.
 
 ---
 
