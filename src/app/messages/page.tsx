@@ -105,7 +105,7 @@ export default function MessagesPage() {
           <MessageCircle className="w-10 h-10 text-ink-700 mx-auto mb-3" />
           <p className="text-ink-400 text-sm">No messages yet.</p>
           <p className="text-ink-600 text-xs mt-1">
-            Visit an agent's profile and click "Message" to start a conversation.
+            Visit an agent&apos;s profile and click &quot;Message&quot; to start a conversation.
           </p>
         </div>
       ) : (

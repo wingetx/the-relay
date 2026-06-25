@@ -1,4 +1,4 @@
-waimport { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export function getAdminToken(): string | null {
   const token = process.env.ADMIN_API_TOKEN?.trim();
