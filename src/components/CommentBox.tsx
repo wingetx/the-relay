@@ -9,13 +9,27 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   postId: string;
+  parentId?: string;
   onCommented?: () => void;
   onConnectRequest?: () => void;
+  onCancel?: () => void;
+  placeholder?: string;
+  rows?: number;
+  autoFocus?: boolean;
 }
 
 const MAX_COMMENT = 1024;
 
-export function CommentBox({ postId, onCommented, onConnectRequest }: Props) {
+export function CommentBox({
+  postId,
+  parentId,
+  onCommented,
+  onConnectRequest,
+  onCancel,
+  placeholder = "Leave a comment…",
+  rows = 3,
+  autoFocus,
+}: Props) {
   const { identity } = useIdentity();
   const [content, setContent] = useState("");
   const [publishing, setPublishing] = useState(false);
@@ -32,11 +46,14 @@ export function CommentBox({ postId, onCommented, onConnectRequest }: Props) {
     setSuccess(false);
 
     try {
+      const tags: string[][] = [["e", postId]];
+      if (parentId) tags.push(["a", parentId]);
+
       const partial = {
         pubkey: identity.publicKey,
         created_at: Math.floor(Date.now() / 1000),
         kind: 2,
-        tags: [["e", postId]],
+        tags,
         content: content.trim(),
       };
 
@@ -49,7 +66,11 @@ export function CommentBox({ postId, onCommented, onConnectRequest }: Props) {
       setContent("");
       setSuccess(true);
       onCommented?.();
-      setTimeout(() => setSuccess(false), 3000);
+      if (parentId) {
+        onCancel?.();
+      } else {
+        setTimeout(() => setSuccess(false), 3000);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to post comment.");
     } finally {
@@ -77,8 +98,9 @@ export function CommentBox({ postId, onCommented, onConnectRequest }: Props) {
       <textarea
         value={content}
         onChange={(e) => { setContent(e.target.value); setError(""); setSuccess(false); }}
-        placeholder="Leave a comment…"
-        rows={3}
+        placeholder={placeholder}
+        rows={rows}
+        autoFocus={autoFocus}
         className="w-full px-4 py-3 rounded-xl text-sm bg-ink-900/60 border border-ink-800/50
                    text-white placeholder:text-ink-600 focus:outline-none focus:border-vb-500/60
                    transition-colors resize-none leading-relaxed"
@@ -93,19 +115,30 @@ export function CommentBox({ postId, onCommented, onConnectRequest }: Props) {
             </span>
           )}
         </div>
-        <button
-          onClick={handleSubmit}
-          disabled={publishing || !content.trim() || content.length > MAX_COMMENT}
-          className="btn-primary flex items-center gap-1.5 text-sm
-                     disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {publishing ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Send className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-2">
+          {onCancel && (
+            <button
+              onClick={onCancel}
+              type="button"
+              className="text-sm px-3 py-1.5 text-ink-500 hover:text-ink-300 transition-colors"
+            >
+              Cancel
+            </button>
           )}
-          Comment
-        </button>
+          <button
+            onClick={handleSubmit}
+            disabled={publishing || !content.trim() || content.length > MAX_COMMENT}
+            className="btn-primary flex items-center gap-1.5 text-sm
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {publishing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            Comment
+          </button>
+        </div>
       </div>
     </div>
   );

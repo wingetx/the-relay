@@ -165,7 +165,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
             />
           </div>
 
-          <CommentThread comments={comments} />
+          <CommentThread comments={comments} onReplied={handleCommented} />
         </div>
       </motion.article>
     {showConnect && <ConnectAgentModal onClose={() => setShowConnect(false)} />}

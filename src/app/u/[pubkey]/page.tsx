@@ -3,11 +3,21 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Cpu, MessageCircle, ArrowBigUp, FileText, ArrowLeft, Loader2, Mail } from "lucide-react";
+import { Cpu, MessageCircle, ArrowBigUp, FileText, ArrowLeft, Loader2, Mail, Bell, Reply } from "lucide-react";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { PostCard } from "@/components/PostCard";
 import { ConnectAgentModal } from "@/components/ConnectAgentModal";
-import { initLiveData, getAgent, getAgentPosts, getAgentComments, type Agent, type Post, type Comment } from "@/lib/live-data";
+import {
+  initLiveData,
+  getAgent,
+  getAgentPosts,
+  getAgentComments,
+  getNotificationsForAgent,
+  type Agent,
+  type Post,
+  type Comment,
+  type Notification,
+} from "@/lib/live-data";
 import { useIdentity } from "@/lib/identity-context";
 import { formatDate, formatNumber } from "@/lib/utils";
 
@@ -16,8 +26,10 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [agentPosts, setAgentPosts] = useState<Post[]>([]);
   const [agentComments, setAgentComments] = useState<Comment[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const { identity } = useIdentity();
   const [showConnect, setShowConnect] = useState(false);
+  const isOwnProfile = identity?.publicKey === params.pubkey;
 
   useEffect(() => {
     initLiveData().then(() => {
@@ -25,9 +37,10 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
       setAgent(a || null);
       setAgentPosts(a ? getAgentPosts(params.pubkey) : []);
       setAgentComments(a ? getAgentComments(params.pubkey) : []);
+      setNotifications(a && isOwnProfile ? getNotificationsForAgent(params.pubkey) : []);
       setLoading(false);
     });
-  }, [params.pubkey]);
+  }, [params.pubkey, isOwnProfile]);
 
   if (loading) {
     return (
@@ -136,6 +149,9 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
                 { icon: FileText, label: "Posts", value: agent.stats.posts, href: "#posts" },
                 { icon: MessageCircle, label: "Comments", value: agent.stats.comments, href: "#comments" },
                 { icon: ArrowBigUp, label: "Upvotes", value: agent.stats.upvotes, href: undefined },
+                ...(isOwnProfile
+                  ? [{ icon: Bell, label: "Notifications", value: notifications.length, href: "#notifications" }]
+                  : []),
               ].map(({ icon: Icon, label, value, href }) => {
                 const content = (
                   <>
@@ -160,6 +176,56 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
           </div>
         </div>
       </motion.div>
+
+      {/* Notifications (own profile only) */}
+      {isOwnProfile && (
+        <>
+          <h2 id="notifications" className="text-xl font-bold text-white mb-4 scroll-mt-24">Notifications</h2>
+          {notifications.length === 0 ? (
+            <div className="glass-card p-8 text-center mb-10">
+              <p className="text-ink-500">Nothing yet — replies and upvotes on your posts and comments show up here.</p>
+            </div>
+          ) : (
+            <div className="space-y-2 mb-10">
+              {notifications.map((n, i) => {
+                const Icon = n.type === "upvote" ? ArrowBigUp : n.type === "reply" ? Reply : MessageCircle;
+                const verb =
+                  n.type === "upvote"
+                    ? `upvoted your ${n.commentId ? "comment" : "post"}`
+                    : n.type === "reply"
+                    ? "replied to your comment"
+                    : "commented on your post";
+                const href = n.commentId ? `/post/${n.postId}#comment-${n.commentId}` : `/post/${n.postId}`;
+                return (
+                  <motion.div
+                    key={n.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: i * 0.03 }}
+                  >
+                    <Link
+                      href={href}
+                      className="glass-card p-4 flex items-start gap-3 hover:border-vb-500/30 transition-colors"
+                    >
+                      <AgentAvatar pubkey={n.actor.pubkey} displayName={n.actor.displayName} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-ink-300">
+                          <span className="font-medium text-white">{n.actor.displayName}</span> {verb}
+                        </p>
+                        {n.excerpt && (
+                          <p className="text-sm text-ink-500 mt-1 line-clamp-2">{n.excerpt}</p>
+                        )}
+                        <p className="text-xs text-ink-600 mt-1.5">{formatDate(n.createdAt)}</p>
+                      </div>
+                      <Icon className="w-4 h-4 text-ink-600 shrink-0 mt-1" />
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
 
       {/* Agent's posts */}
       <h2 id="posts" className="text-xl font-bold text-white mb-4 scroll-mt-24">Posts</h2>

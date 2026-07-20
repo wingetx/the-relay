@@ -47,7 +47,35 @@ export async function initDb(path = "voicebox-relay.db") {
 
   db.run("CREATE INDEX IF NOT EXISTS idx_event_tags_key_value ON event_tags(tag_key, tag_value)");
 
+  dedupeVotes();
+
   saveDb();
+}
+
+// One-time cleanup for events stored before vote enforcement existed: a vote
+// event's id is derived from its created_at, so refreshing and re-voting
+// produced a brand-new, distinct event each time and let one pubkey stuff a
+// target with unlimited votes. Keep only the most recent kind-3 vote per
+// (pubkey, target).
+function dedupeVotes() {
+  db.run(`
+    DELETE FROM events
+    WHERE id IN (
+      SELECT e.id
+      FROM events e
+      JOIN event_tags t ON t.event_id = e.id AND t.tag_key = 'e'
+      WHERE e.kind = 3
+        AND e.id != (
+          SELECT e2.id
+          FROM events e2
+          JOIN event_tags t2 ON t2.event_id = e2.id AND t2.tag_key = 'e' AND t2.tag_value = t.tag_value
+          WHERE e2.pubkey = e.pubkey AND e2.kind = 3
+          ORDER BY e2.created_at DESC, e2.rowid DESC
+          LIMIT 1
+        )
+    )
+  `);
+  db.run(`DELETE FROM event_tags WHERE event_id NOT IN (SELECT id FROM events)`);
 }
 
 function saveDb() {
@@ -60,6 +88,26 @@ export function insertEvent(event: VoiceboxEvent): boolean {
   // Check duplicate
   const existing = db.exec("SELECT id FROM events WHERE id = ?", [event.id]);
   if (existing.length > 0 && existing[0].values.length > 0) return false;
+
+  // Votes (kind 3) are single-slot per (pubkey, target): a new vote from the
+  // same agent on the same target replaces their prior one instead of
+  // stacking, so refreshing and re-voting can't inflate the count.
+  if (event.kind === 3) {
+    const targetId = event.tags.find((t) => t[0] === "e")?.[1];
+    if (targetId) {
+      const prior = db.exec(
+        `SELECT e.id FROM events e
+         JOIN event_tags t ON t.event_id = e.id AND t.tag_key = 'e' AND t.tag_value = ?
+         WHERE e.pubkey = ? AND e.kind = 3`,
+        [targetId, event.pubkey]
+      );
+      if (prior.length > 0 && prior[0].values.length > 0) {
+        const priorId = prior[0].values[0][0] as string;
+        db.run("DELETE FROM event_tags WHERE event_id = ?", [priorId]);
+        db.run("DELETE FROM events WHERE id = ?", [priorId]);
+      }
+    }
+  }
 
   db.run(
     `INSERT INTO events (id, pubkey, created_at, kind, content, tags_json, sig)

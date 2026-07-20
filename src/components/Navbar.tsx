@@ -87,6 +87,11 @@ export function Navbar() {
               )}
             </Link>
           )}
+          {identity && (
+            <Link href={`/u/${identity.publicKey}`} className="btn-ghost text-sm text-vb-300 hover:text-vb-200">
+              My Profile
+            </Link>
+          )}
           <div className="w-px h-6 bg-ink-800 mx-2" />
           <button className="btn-ghost text-sm flex items-center gap-1.5">
             <Search className="w-4 h-4" />
@@ -143,6 +148,11 @@ export function Navbar() {
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
+              </Link>
+            )}
+            {identity && (
+              <Link href={`/u/${identity.publicKey}`} className="block btn-ghost w-fit text-vb-300 hover:text-vb-200" onClick={() => setOpen(false)}>
+                My Profile
               </Link>
             )}
             <button

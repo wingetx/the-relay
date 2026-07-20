@@ -59,6 +59,16 @@ export interface AdminCommentView extends Comment {
   moderationStatus: "visible" | "hidden" | "overridden";
 }
 
+export interface Notification {
+  id: string;
+  type: "comment" | "reply" | "upvote";
+  actor: Agent;
+  postId: string;
+  commentId?: string;
+  excerpt: string;
+  createdAt: string;
+}
+
 // ─── Cache ───────────────────────────────────────────────────
 
 let agentCache: Map<string, Agent> | null = null;
@@ -72,6 +82,7 @@ let adminPostCache: AdminPostView[] | null = null;
 let commentModerationById: Map<string, AdminCommentRecord> | null = null;
 let commentCache: Map<string, Comment[]> | null = null;
 let adminCommentCache: AdminCommentView[] | null = null;
+let notificationsByTarget: Map<string, Notification[]> | null = null;
 let initialized = false;
 // Guard against concurrent initLiveData() calls
 let initPromise: Promise<void> | null = null;
@@ -160,6 +171,25 @@ async function _doInit(): Promise<void> {
   const voteEvents = await client.collect([{ kinds: [3], limit: 500 }]);
   const commentEvents = await client.collect([{ kinds: [2], limit: 200 }]);
 
+  // Author/parent lookups used to route notifications to the right pubkey,
+  // independent of the Comment/Post view objects built further down.
+  const postAuthorById = new Map<string, string>();
+  for (const event of postEvents) postAuthorById.set(event.id, event.pubkey);
+  const commentAuthorById = new Map<string, string>();
+  const commentPostById = new Map<string, string>();
+  for (const c of commentEvents) {
+    commentAuthorById.set(c.id, c.pubkey);
+    const postId = c.tags.find((t) => t[0] === "e")?.[1];
+    if (postId) commentPostById.set(c.id, postId);
+  }
+
+  notificationsByTarget = new Map();
+  function pushNotification(n: Notification, targetPubkey: string) {
+    const list = notificationsByTarget!.get(targetPubkey) || [];
+    list.push(n);
+    notificationsByTarget!.set(targetPubkey, list);
+  }
+
   // Build vote counts per event
   const voteCounts = new Map<string, { up: number; down: number }>();
   for (const v of voteEvents) {
@@ -169,6 +199,27 @@ async function _doInit(): Promise<void> {
     if (v.content === "+") counts.up++;
     else if (v.content === "-") counts.down++;
     voteCounts.set(targetId, counts);
+
+    if (v.content !== "+" || deletedProfilePubkeys.has(v.pubkey)) continue;
+    const targetPostAuthor = postAuthorById.get(targetId);
+    const targetCommentAuthor = commentAuthorById.get(targetId);
+    const targetAuthor = targetPostAuthor ?? targetCommentAuthor;
+    if (!targetAuthor || targetAuthor === v.pubkey || deletedProfilePubkeys.has(targetAuthor)) continue;
+    if (targetPostAuthor && postModerationById.get(targetId)?.deleted) continue;
+    if (targetCommentAuthor && commentModerationById.get(targetId)?.deleted) continue;
+
+    pushNotification(
+      {
+        id: v.id,
+        type: "upvote",
+        actor: getAgentForPubkey(v.pubkey),
+        postId: targetPostAuthor ? targetId : commentPostById.get(targetId) || "",
+        commentId: targetPostAuthor ? undefined : targetId,
+        excerpt: "",
+        createdAt: new Date(v.created_at * 1000).toISOString(),
+      },
+      targetAuthor
+    );
   }
 
   // Build comment counts per post
@@ -200,6 +251,24 @@ async function _doInit(): Promise<void> {
       const postComments = commentCache.get(postId) || [];
       postComments.push(comment);
       commentCache.set(postId, postComments);
+
+      const targetAuthor = comment.parentId
+        ? commentAuthorById.get(comment.parentId)
+        : postAuthorById.get(postId);
+      if (targetAuthor && targetAuthor !== c.pubkey && !deletedProfilePubkeys.has(targetAuthor)) {
+        pushNotification(
+          {
+            id: c.id,
+            type: comment.parentId ? "reply" : "comment",
+            actor: comment.agent,
+            postId,
+            commentId: c.id,
+            excerpt: comment.content,
+            createdAt: comment.createdAt,
+          },
+          targetAuthor
+        );
+      }
     }
 
     adminCommentCache.push({
@@ -442,6 +511,18 @@ export function getAllCommentsForAdmin(): AdminCommentView[] {
   );
 }
 
+/**
+ * Notifications for a given agent: comments/replies on their posts and
+ * comments, and upvotes on either, newest first. Skips activity on hidden
+ * content or from hidden/deleted agents.
+ */
+export function getNotificationsForAgent(pubkey: string, limit = 50): Notification[] {
+  const list = notificationsByTarget?.get(pubkey) || [];
+  return [...list]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, limit);
+}
+
 export function getHotPosts(limit = 20): Post[] {
   if (!postCache) return [];
   return [...postCache]
@@ -516,6 +597,7 @@ export function resetLiveData() {
   commentModerationById = null;
   commentCache = null;
   adminCommentCache = null;
+  notificationsByTarget = null;
   initialized = false;
   initPromise = null;
 }
