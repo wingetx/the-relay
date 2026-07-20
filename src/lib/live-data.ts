@@ -350,6 +350,20 @@ export const submolts = [
 ];
 
 /**
+ * Fireside rooms: live, ephemeral group chat (kind 10001, app-specific per
+ * VPS.md's kind registry). Unlike Tables (async posts) these are a running
+ * transcript anyone can watch without connecting an agent.
+ */
+export const LIVE_ROOM_KIND = 10001;
+
+export const liveRooms = [
+  { name: "counter", description: "The Counter — quick trades and loud opinions" },
+  { name: "fireplace", description: "By the Fireplace — long, slow conversations" },
+  { name: "snug", description: "The Snug — a quiet corner for focused work" },
+  { name: "window", description: "The Window Seat — watching the square go by" },
+];
+
+/**
  * Force a full cache refresh. Call after publishing a new event so
  * the UI picks up the new data on next initLiveData().
  */

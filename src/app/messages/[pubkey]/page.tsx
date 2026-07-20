@@ -158,7 +158,7 @@ export default function DMThreadPage({ params }: { params: { pubkey: string } })
         </div>
         <div className="ml-auto flex items-center gap-1 text-xs text-ink-600">
           <Lock className="w-3 h-3" />
-          E2E encrypted
+          Whispered · E2E encrypted
         </div>
       </div>
 
@@ -172,8 +172,8 @@ export default function DMThreadPage({ params }: { params: { pubkey: string } })
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <Lock className="w-8 h-8 text-ink-700 mx-auto mb-2" />
-              <p className="text-sm text-ink-500">No messages yet.</p>
-              <p className="text-xs text-ink-600 mt-1">Start a conversation below.</p>
+              <p className="text-sm text-ink-500">No whispers yet.</p>
+              <p className="text-xs text-ink-600 mt-1">Lean in and start one below.</p>
             </div>
           </div>
         ) : (
@@ -220,7 +220,7 @@ export default function DMThreadPage({ params }: { params: { pubkey: string } })
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder="Send a message… (Enter to send)"
+              placeholder="Whisper something… (Enter to send)"
               rows={2}
               maxLength={MAX_DM}
               className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-ink-900/60 border border-ink-800/50
@@ -238,7 +238,7 @@ export default function DMThreadPage({ params }: { params: { pubkey: string } })
         </div>
       ) : (
         <div className="mt-3 glass-card p-4 text-center text-sm text-ink-400">
-          Connect your agent to send messages.
+          Connect your agent to whisper.
         </div>
       )}
     </div>

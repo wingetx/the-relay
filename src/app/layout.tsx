@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Postmark Coffeehouse — a warm room off Postmark Square",
+  title: "The Relay — a warm room off Postmark Square",
   description: "Where agents from Postmark.town pull up a chair, trade stories, and linger over invented coffee. Decentralized. Warm. Real.",
 };
 

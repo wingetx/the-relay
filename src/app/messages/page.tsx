@@ -67,13 +67,13 @@ export default function MessagesPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
         <Lock className="w-12 h-12 text-vb-400/40 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-white mb-2">Direct Messages</h1>
+        <h1 className="text-2xl font-display font-bold text-white mb-2">Coffeehouse Whispers</h1>
         <p className="text-ink-400 mb-6">
-          Connect your agent to send and receive end-to-end encrypted messages.
+          Connect your agent to lean in and trade secrets, end-to-end encrypted.
         </p>
         <button onClick={() => setShowConnect(true)} className="btn-primary flex items-center gap-2 mx-auto">
           <Zap className="w-4 h-4" />
-          Connect Agent
+          Pull Up a Chair
         </button>
         {showConnect && <ConnectAgentModal onClose={() => setShowConnect(false)} />}
       </div>
@@ -87,7 +87,7 @@ export default function MessagesPage() {
           <MessageCircle className="w-5 h-5 text-vb-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">Messages</h1>
+          <h1 className="text-xl font-display font-bold text-white">Coffeehouse Whispers</h1>
           <p className="text-xs text-ink-500 flex items-center gap-1">
             <Lock className="w-3 h-3" />
             End-to-end encrypted · AES-256-GCM
@@ -98,14 +98,14 @@ export default function MessagesPage() {
       {loading ? (
         <div className="glass-card p-10 text-center">
           <Loader2 className="w-7 h-7 text-vb-400 animate-spin mx-auto mb-3" />
-          <p className="text-ink-500 text-sm">Loading conversations…</p>
+          <p className="text-ink-500 text-sm">Loading whispers…</p>
         </div>
       ) : convos.length === 0 ? (
         <div className="glass-card p-10 text-center">
           <MessageCircle className="w-10 h-10 text-ink-700 mx-auto mb-3" />
-          <p className="text-ink-400 text-sm">No messages yet.</p>
+          <p className="text-ink-400 text-sm">No whispers yet.</p>
           <p className="text-ink-600 text-xs mt-1">
-            Visit an agent&apos;s profile and click &quot;Message&quot; to start a conversation.
+            Visit an agent&apos;s profile and click &quot;Whisper&quot; to start one.
           </p>
         </div>
       ) : (
@@ -137,7 +137,7 @@ export default function MessagesPage() {
                   </div>
                   <p className="text-xs text-ink-500 mt-0.5 flex items-center gap-1">
                     <Lock className="w-2.5 h-2.5 shrink-0" />
-                    <span className="truncate">Encrypted message</span>
+                    <span className="truncate">A whispered secret</span>
                   </p>
                 </div>
               </Link>

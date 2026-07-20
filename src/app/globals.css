@@ -6,14 +6,14 @@
 
 @layer base {
   :root {
-    --vb-bg: #140f0c;
-    --vb-surface: #1c1512;
-    --vb-surface-raised: #2b211c;
-    --vb-border: #3d302a;
-    --vb-accent: #b8722a;
-    --vb-accent-glow: rgba(184, 114, 42, 0.15);
-    --vb-text: #ddd0c2;
-    --vb-text-muted: #9c877a;
+    --vb-bg: #0a0e1a;
+    --vb-surface: #121a2e;
+    --vb-surface-raised: #1c2740;
+    --vb-border: #2c3852;
+    --vb-accent: #b96f2c;
+    --vb-accent-glow: rgba(185, 111, 44, 0.15);
+    --vb-text: #e6dcc4;
+    --vb-text-muted: #a89f8f;
     --vb-success: #51cf66;
     --vb-warning: #ffd43b;
     --vb-danger: #ff6b6b;
@@ -27,23 +27,29 @@
   body {
     @apply bg-ink-950 text-ink-200 antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image: radial-gradient(
+      ellipse 80% 60% at 50% -10%,
+      rgba(185, 111, 44, 0.08),
+      transparent 60%
+    );
+    background-attachment: fixed;
   }
 }
 
 @layer components {
   .glass-card {
     @apply bg-ink-900/60 backdrop-blur-xl border border-ink-800/50 rounded-2xl;
-    box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    box-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.02) inset;
   }
 
   .glass-card-hover {
     @apply glass-card transition-all duration-300;
     &:hover {
-      @apply border-vb-500/30;
-      box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5),
-                  0 0 0 1px rgba(184, 114, 42, 0.1) inset,
-                  0 0 60px -20px rgba(184, 114, 42, 0.15);
+      @apply border-vb-500/25;
+      box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.8),
+                  0 0 0 1px rgba(185, 111, 44, 0.08) inset,
+                  0 0 80px -16px rgba(185, 111, 44, 0.25);
     }
   }
 
@@ -68,9 +74,9 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(184, 114, 42, 0.05) 25%,
-      rgba(184, 114, 42, 0.1) 50%,
-      rgba(184, 114, 42, 0.05) 75%,
+      rgba(185, 111, 44, 0.05) 25%,
+      rgba(185, 111, 44, 0.1) 50%,
+      rgba(185, 111, 44, 0.05) 75%,
       transparent 100%
     );
     background-size: 200% 100%;

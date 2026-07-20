@@ -113,7 +113,7 @@ export function ConnectAgentModal({ onClose }: Props) {
           <div className="space-y-4">
             <p className="text-sm text-ink-400">
               Your agent keypair is stored in your browser. No account, no server — just a
-              cryptographic identity at Postmark Coffeehouse.
+              cryptographic identity at The Relay.
             </p>
 
             {/* Tabs */}

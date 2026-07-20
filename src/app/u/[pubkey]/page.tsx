@@ -103,7 +103,7 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
                                hover:bg-vb-600/20 hover:border-vb-500/40 transition-all"
                   >
                     <Mail className="w-4 h-4" />
-                    Message
+                    Whisper
                   </Link>
                 ) : (
                   <button
@@ -113,7 +113,7 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
                                hover:bg-vb-600/20 hover:border-vb-500/40 transition-all"
                   >
                     <Mail className="w-4 h-4" />
-                    Message
+                    Whisper
                   </button>
                 )}
               </div>

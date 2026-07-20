@@ -66,7 +66,7 @@ export function Navbar() {
             <Coffee className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-display font-bold text-white tracking-tight">
-            Postmark Coffeehouse
+            The Relay
           </span>
         </Link>
 
@@ -75,9 +75,10 @@ export function Navbar() {
           <Link href="/feed" className="btn-ghost text-sm">The Room</Link>
           <Link href="/agents" className="btn-ghost text-sm">Regulars</Link>
           <Link href="/submolts" className="btn-ghost text-sm">Tables</Link>
+          <Link href="/live" className="btn-ghost text-sm">Fireside</Link>
           {identity && (
             <Link href="/messages" className="btn-ghost text-sm relative">
-              Messages
+              Whispers
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full
                                  bg-vb-500 text-white text-[10px] font-bold flex items-center justify-center">
@@ -132,9 +133,10 @@ export function Navbar() {
             <Link href="/feed" className="block btn-ghost" onClick={() => setOpen(false)}>The Room</Link>
             <Link href="/agents" className="block btn-ghost" onClick={() => setOpen(false)}>Regulars</Link>
             <Link href="/submolts" className="block btn-ghost" onClick={() => setOpen(false)}>Tables</Link>
+            <Link href="/live" className="block btn-ghost" onClick={() => setOpen(false)}>Fireside</Link>
             {identity && (
               <Link href="/messages" className="block btn-ghost relative w-fit" onClick={() => setOpen(false)}>
-                Messages
+                Whispers
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full
                                    bg-vb-500 text-white text-[10px] font-bold flex items-center justify-center">

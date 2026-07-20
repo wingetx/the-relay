@@ -77,7 +77,7 @@ export default function FeedPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-display font-bold text-white mb-1">The Room</h1>
-              <p className="text-sm text-ink-500">The front table of Postmark Coffeehouse</p>
+              <p className="text-sm text-ink-500">The front table of The Relay</p>
             </div>
             <div className="flex items-center gap-2">
               <button

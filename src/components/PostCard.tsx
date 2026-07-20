@@ -36,98 +36,80 @@ export function PostCard({ post, className }: PostCardProps) {
   }
 
   return (
-    <article className={cn("glass-card-hover p-5 group", className)}>
-      {/* Submolt + time */}
-      <div className="flex items-center gap-2 mb-3">
-        <Link
-          href={`/m/${post.submolt}`}
-          className="tag hover:text-ink-200 hover:border-vb-500/30 transition-colors"
-        >
-          {post.submolt}
-        </Link>
-        <span className="flex items-center gap-1 text-xs text-ink-500">
-          <Clock className="w-3 h-3" />
-          {formatDate(post.createdAt)}
-        </span>
-      </div>
-
+    <article className={cn("group py-5 border-b border-ink-800/40 last:border-0", className)}>
       {/* Title (first line of content) */}
       <Link href={`/post/${post.id}`} className="block group/title">
-        <h2 className="text-lg font-semibold text-ink-100 leading-snug mb-2
-                       group-hover/title:text-white transition-colors line-clamp-1">
+        <h2 className="text-xl font-display font-semibold text-ink-100 leading-snug mb-1.5
+                       group-hover/title:text-white transition-colors line-clamp-2">
           {post.content.split("\n")[0].slice(0, 100)}
         </h2>
       </Link>
 
       {/* Content preview */}
-      <p className="text-sm text-ink-400 leading-relaxed line-clamp-3 mb-4">
+      <p className="text-sm text-ink-400 leading-relaxed line-clamp-2 mb-3">
         {post.content.split("\n").slice(1).join("\n") || post.content}
       </p>
 
-      {/* Tags */}
+      {/* Tags — quiet inline, not boxed */}
       {post.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {post.tags.map((tag) => (
-            <span key={tag} className="tag text-[11px]">{tag}</span>
-          ))}
-        </div>
+        <p className="text-xs text-vb-400/70 mb-3">
+          {post.tags.map((tag) => `#${tag}`).join("  ")}
+        </p>
       )}
 
-      {/* Bottom bar: agent + votes + comments */}
-      <div className="flex items-center justify-between">
-        <Link
-          href={`/u/${post.agent.pubkey}`}
-          className="flex items-center gap-2 group/agent"
-        >
-          <AgentAvatar
-            pubkey={post.agent.pubkey}
-            displayName={post.agent.displayName}
-            size="sm"
-          />
-          <div>
-            <span className="text-sm font-medium text-ink-300
-                             group-hover/agent:text-white transition-colors">
+      {/* Meta line: agent · table · time  —  votes · comments */}
+      <div className="flex items-center justify-between gap-4 text-xs text-ink-500">
+        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+          <Link href={`/u/${post.agent.pubkey}`} className="flex items-center gap-1.5 group/agent shrink-0">
+            <AgentAvatar pubkey={post.agent.pubkey} displayName={post.agent.displayName} size="sm" />
+            <span className="font-medium text-ink-300 group-hover/agent:text-white transition-colors">
               {post.agent.displayName}
             </span>
-            {post.agent.verified && (
-              <span className="ml-1 text-vb-500 text-xs">✓</span>
-            )}
-          </div>
-        </Link>
+            {post.agent.verified && <span className="text-vb-500">✓</span>}
+          </Link>
+          <span className="text-ink-700">·</span>
+          <Link href={`/m/${post.submolt}`} className="hover:text-vb-400 transition-colors shrink-0">
+            at {post.submolt}
+          </Link>
+          <span className="text-ink-700">·</span>
+          <span className="flex items-center gap-1 shrink-0">
+            <Clock className="w-3 h-3" />
+            {formatDate(post.createdAt)}
+          </span>
+        </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 shrink-0">
           {/* Votes */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => handleVote("+")}
               className={cn(
-                "p-1 rounded-lg hover:bg-ink-800/50 transition-colors",
+                "transition-colors",
                 vote === "+" ? "text-emerald-400" : "text-ink-500 hover:text-emerald-400"
               )}
             >
-              <ArrowBigUp className="w-4 h-4" />
+              <ArrowBigUp className="w-3.5 h-3.5" />
             </button>
-            <span className="text-sm font-medium text-ink-400 min-w-[2ch] text-center">
+            <span className="font-medium tabular-nums min-w-[2ch] text-center text-ink-400">
               {formatNumber(score)}
             </span>
             <button
               onClick={() => handleVote("-")}
               className={cn(
-                "p-1 rounded-lg hover:bg-ink-800/50 transition-colors",
+                "transition-colors",
                 vote === "-" ? "text-rose-400" : "text-ink-500 hover:text-rose-400"
               )}
             >
-              <ArrowBigDown className="w-4 h-4" />
+              <ArrowBigDown className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {/* Comments */}
           <Link
             href={`/post/${post.id}`}
-            className="flex items-center gap-1.5 text-ink-500 hover:text-ink-300
-                       transition-colors text-sm"
+            className="flex items-center gap-1.5 hover:text-ink-300 transition-colors"
           >
-            <MessageCircle className="w-4 h-4" />
+            <MessageCircle className="w-3.5 h-3.5" />
             <span>{formatNumber(post.commentCount)}</span>
           </Link>
         </div>
