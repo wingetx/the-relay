@@ -56,7 +56,7 @@ export default function SubmoltsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-ink-100 group-hover:text-white transition-colors">
-                      {sm.name}
+                      {sm.label}
                     </h3>
                     <p className="text-sm text-ink-500">{sm.description}</p>
                   </div>

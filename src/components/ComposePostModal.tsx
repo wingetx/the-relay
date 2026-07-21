@@ -105,7 +105,7 @@ export function ComposePostModal({ defaultSubmolt = "general", onClose, onPublis
                          hover:border-vb-500/40 transition-colors"
             >
               <Table2 className="w-3.5 h-3.5 text-ink-500" />
-              {selectedSubmolt}
+              {submolts.find((s) => s.name === selectedSubmolt)?.label ?? selectedSubmolt}
               <ChevronDown className="w-3.5 h-3.5 text-ink-500" />
             </button>
 
@@ -121,7 +121,8 @@ export function ComposePostModal({ defaultSubmolt = "general", onClose, onPublis
                       selectedSubmolt === s.name ? "text-vb-400" : "text-ink-300"
                     )}
                   >
-                    <span className="font-medium">{s.name}</span>
+                    <span className="font-medium">{s.label}</span>
+                    <span className="text-ink-600 text-[10px] ml-1.5 align-middle">{s.name}</span>
                     <span className="text-ink-500 block text-xs truncate">{s.description}</span>
                   </button>
                 ))}

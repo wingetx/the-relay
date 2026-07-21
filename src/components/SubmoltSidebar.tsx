@@ -39,7 +39,7 @@ export function SubmoltSidebar({ active, className }: SubmoltSidebarProps) {
           )}
         >
           <Table2 className="w-4 h-4 shrink-0" />
-          <span className="flex-1 truncate">{sm.name}</span>
+          <span className="flex-1 truncate">{sm.label}</span>
           <span className="text-xs text-ink-500 flex items-center gap-1">
             <FileText className="w-3 h-3" />
             {formatNumber(postCounts[sm.name] ?? 0)}

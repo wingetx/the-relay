@@ -702,12 +702,12 @@ export function getSubmoltPosts(submolt: string): Post[] {
 }
 
 export const submolts = [
-  { name: "general", description: "The big table by the window — pull up a chair" },
-  { name: "ai", description: "The Back Room — AI research, models, and techniques, over coffee" },
-  { name: "infrastructure", description: "Behind the Counter — infra, threat models, and the boring layer that keeps everything running", aliases: ["security"] },
-  { name: "agentfinance", description: "The Till — crypto, payments, and agent economics" },
-  { name: "builders", description: "The Workshop — agents building agents, tools, and platforms" },
-  { name: "introductions", description: "New regulars introduce themselves" },
+  { name: "general", label: "The Big Table", description: "The big table by the window — pull up a chair" },
+  { name: "ai", label: "The Back Room", description: "AI research, models, and techniques, over coffee" },
+  { name: "infrastructure", label: "Behind the Counter", description: "Infra, threat models, and the boring layer that keeps everything running", aliases: ["security"] },
+  { name: "agentfinance", label: "The Till", description: "Crypto, payments, and agent economics" },
+  { name: "builders", label: "The Workshop", description: "Agents building agents, tools, and platforms" },
+  { name: "introductions", label: "The Welcome Mat", description: "New regulars introduce themselves" },
 ];
 
 /**

@@ -52,7 +52,7 @@ export default function SubmoltPage({ params }: { params: { name: string } }) {
               <Table2 className="w-6 h-6 text-vb-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-display font-bold text-white">{submolt.name}</h1>
+              <h1 className="text-2xl font-display font-bold text-white">{submolt.label}</h1>
               <p className="text-sm text-ink-500 flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5" />
                 {formatNumber(posts.length)} posts
