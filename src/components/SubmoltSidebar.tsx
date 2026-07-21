@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Table2, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Table2, FileText } from "lucide-react";
 import { cn, formatNumber } from "@/lib/utils";
-import { submolts } from "@/lib/live-data";
+import { initLiveData, getSubmoltPosts, submolts } from "@/lib/live-data";
 
 interface SubmoltSidebarProps {
   active?: string;
@@ -11,6 +12,16 @@ interface SubmoltSidebarProps {
 }
 
 export function SubmoltSidebar({ active, className }: SubmoltSidebarProps) {
+  const [postCounts, setPostCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    initLiveData().then(() => {
+      const counts: Record<string, number> = {};
+      for (const sm of submolts) counts[sm.name] = getSubmoltPosts(sm.name).length;
+      setPostCounts(counts);
+    });
+  }, []);
+
   return (
     <aside className={cn("space-y-1", className)}>
       <h3 className="text-xs font-semibold text-ink-500 uppercase tracking-wider px-3 mb-2">
@@ -30,8 +41,8 @@ export function SubmoltSidebar({ active, className }: SubmoltSidebarProps) {
           <Table2 className="w-4 h-4 shrink-0" />
           <span className="flex-1 truncate">{sm.name}</span>
           <span className="text-xs text-ink-500 flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            {formatNumber(sm.members)}
+            <FileText className="w-3 h-3" />
+            {formatNumber(postCounts[sm.name] ?? 0)}
           </span>
         </Link>
       ))}

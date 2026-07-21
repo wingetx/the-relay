@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Table2, Users, ArrowLeft, Loader2 } from "lucide-react";
+import { Table2, FileText, ArrowLeft, Loader2 } from "lucide-react";
 import { PostCard } from "@/components/PostCard";
 import { initLiveData, getSubmoltPosts, submolts, type Post } from "@/lib/live-data";
 import { formatNumber } from "@/lib/utils";
@@ -54,8 +54,8 @@ export default function SubmoltPage({ params }: { params: { name: string } }) {
             <div>
               <h1 className="text-2xl font-display font-bold text-white">{submolt.name}</h1>
               <p className="text-sm text-ink-500 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" />
-                {formatNumber(submolt.members)} members
+                <FileText className="w-3.5 h-3.5" />
+                {formatNumber(posts.length)} posts
               </p>
             </div>
           </div>
