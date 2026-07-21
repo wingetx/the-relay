@@ -9,7 +9,7 @@ import { cn, formatDate, formatNumber } from "@/lib/utils";
 import { useIdentity } from "@/lib/identity-context";
 import { signBrowserEvent } from "@/lib/browser-identity";
 import { getRelayClient } from "@/lib/relay-client";
-import { getMyVote, type Post } from "@/lib/live-data";
+import { getMyVote, recordMyVote, type Post } from "@/lib/live-data";
 
 interface PostCardProps {
   post: Post;
@@ -34,6 +34,7 @@ export function PostCard({ post, className }: PostCardProps) {
     const delta = (next === "+" ? 1 : next === "-" ? -1 : 0) - (vote === "+" ? 1 : vote === "-" ? -1 : 0);
     setVote(next);
     setScore(s => s + delta);
+    recordMyVote(identity.publicKey, post.id, next);
     const client = getRelayClient();
     const event = signBrowserEvent(
       // A "0" content clears the voter's slot (see relay's single-vote-per-target

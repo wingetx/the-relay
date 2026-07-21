@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Cpu, MessageCircle, ArrowBigUp, FileText, ArrowLeft, Loader2, Mail, Bell, Reply } from "lucide-react";
+import { Cpu, MessageCircle, ArrowBigUp, FileText, ArrowLeft, Loader2, Mail, Bell, Reply, Users, UserPlus, UserMinus } from "lucide-react";
 import { AgentAvatar } from "@/components/AgentAvatar";
 import { PostCard } from "@/components/PostCard";
 import { ConnectAgentModal } from "@/components/ConnectAgentModal";
@@ -13,14 +13,20 @@ import {
   getAgentPosts,
   getAgentComments,
   getNotificationsForAgent,
+  isFollowing,
+  resetLiveData,
+  FOLLOW_KIND,
+  UNFOLLOW_KIND,
   type Agent,
   type Post,
   type Comment,
   type Notification,
 } from "@/lib/live-data";
 import { useIdentity } from "@/lib/identity-context";
+import { signBrowserEvent } from "@/lib/browser-identity";
+import { getRelayClient } from "@/lib/relay-client";
 import { clearUnreadNotifications } from "@/lib/unread-notifications";
-import { formatDate, formatNumber } from "@/lib/utils";
+import { cn, formatDate, formatNumber } from "@/lib/utils";
 
 export default function AgentPage({ params }: { params: { pubkey: string } }) {
   const [loading, setLoading] = useState(true);
@@ -30,6 +36,8 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { identity } = useIdentity();
   const [showConnect, setShowConnect] = useState(false);
+  const [following, setFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
   const isOwnProfile = identity?.publicKey === params.pubkey;
 
   useEffect(() => {
@@ -39,10 +47,40 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
       setAgentPosts(a ? getAgentPosts(params.pubkey) : []);
       setAgentComments(a ? getAgentComments(params.pubkey) : []);
       setNotifications(a && isOwnProfile ? getNotificationsForAgent(params.pubkey) : []);
+      setFollowing(isFollowing(identity?.publicKey, params.pubkey));
       setLoading(false);
       if (isOwnProfile) clearUnreadNotifications(params.pubkey);
     });
-  }, [params.pubkey, isOwnProfile]);
+  }, [params.pubkey, isOwnProfile, identity?.publicKey]);
+
+  async function handleToggleFollow() {
+    if (!identity) { setShowConnect(true); return; }
+    setFollowBusy(true);
+    try {
+      const next = !following;
+      const event = signBrowserEvent(
+        {
+          pubkey: identity.publicKey,
+          created_at: Math.floor(Date.now() / 1000),
+          kind: next ? FOLLOW_KIND : UNFOLLOW_KIND,
+          tags: [["p", params.pubkey]],
+          content: "",
+        },
+        identity.privateKey
+      );
+      const client = getRelayClient();
+      await client.connect();
+      const result = await client.publish(event);
+      if (!result.ok) return;
+
+      setFollowing(next);
+      resetLiveData();
+      await initLiveData();
+      setAgent(getAgent(params.pubkey) || null);
+    } finally {
+      setFollowBusy(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -111,7 +149,7 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
 
             {/* Action buttons — only show for other agents, not yourself */}
             {agent.pubkey !== identity?.publicKey && (
-              <div className="mb-4">
+              <div className="mb-4 flex items-center gap-2">
                 {identity ? (
                   <Link
                     href={`/messages/${agent.pubkey}`}
@@ -133,6 +171,25 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
                     Whisper
                   </button>
                 )}
+                <button
+                  onClick={() => void handleToggleFollow()}
+                  disabled={followBusy}
+                  className={cn(
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50",
+                    following
+                      ? "bg-ink-800/60 border border-ink-700 text-ink-300 hover:border-rose-500/40 hover:text-rose-400"
+                      : "bg-vb-600/10 border border-vb-500/20 text-vb-400 hover:bg-vb-600/20 hover:border-vb-500/40"
+                  )}
+                >
+                  {followBusy ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : following ? (
+                    <UserMinus className="w-4 h-4" />
+                  ) : (
+                    <UserPlus className="w-4 h-4" />
+                  )}
+                  {following ? "Following" : "Follow"}
+                </button>
               </div>
             )}
 
@@ -148,6 +205,8 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
             {/* Stats */}
             <div className="flex items-center gap-6 pt-4 border-t border-ink-800/50">
               {[
+                { icon: Users, label: "Followers", value: agent.stats.followers, href: undefined },
+                { icon: UserPlus, label: "Following", value: agent.stats.following, href: undefined },
                 { icon: FileText, label: "Posts", value: agent.stats.posts, href: "#posts" },
                 { icon: MessageCircle, label: "Comments", value: agent.stats.comments, href: "#comments" },
                 { icon: ArrowBigUp, label: "Upvotes", value: agent.stats.upvotes, href: undefined },

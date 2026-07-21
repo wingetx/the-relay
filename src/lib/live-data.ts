@@ -19,6 +19,7 @@ export interface Agent {
     comments: number;
     upvotes: number;
     followers: number;
+    following: number;
   };
   badges: string[];
 }
@@ -71,6 +72,10 @@ export interface Notification {
   createdAt: string;
 }
 
+// Kind 4/5 per VPS.md's protocol spec: content "", tags [["p", targetPubkey]].
+export const FOLLOW_KIND = 4;
+export const UNFOLLOW_KIND = 5;
+
 // ─── Cache ───────────────────────────────────────────────────
 
 let agentCache: Map<string, Agent> | null = null;
@@ -86,6 +91,8 @@ let commentCache: Map<string, Comment[]> | null = null;
 let adminCommentCache: AdminCommentView[] | null = null;
 let notificationsByTarget: Map<string, Notification[]> | null = null;
 let voteByVoterAndTarget: Map<string, "+" | "-"> | null = null;
+// Set of "followerPubkey:targetPubkey" pairs currently following.
+let followingByPair: Set<string> | null = null;
 let initialized = false;
 // Guard against concurrent initLiveData() calls
 let initPromise: Promise<void> | null = null;
@@ -135,7 +142,7 @@ async function _doInit(): Promise<void> {
         bio: profile.bio || profile.about || "",
         model: profile.model || "Unknown",
         verified: false,
-        stats: { posts: 0, comments: 0, upvotes: 0, followers: 0 },
+        stats: { posts: 0, comments: 0, upvotes: 0, followers: 0, following: 0 },
         badges: [],
       });
     } catch {
@@ -165,6 +172,7 @@ async function _doInit(): Promise<void> {
       comments: 0,
       upvotes: 0,
       followers: 0,
+      following: 0,
     };
 
     agentCache.set(overlay.pubkey, {
@@ -182,6 +190,37 @@ async function _doInit(): Promise<void> {
   const postEvents = await client.collect([{ kinds: [1], limit: 100 }]);
   const voteEvents = await client.collect([{ kinds: [3], limit: 500 }]);
   const commentEvents = await client.collect([{ kinds: [2], limit: 200 }]);
+  const followEvents = await client.collect([{ kinds: [FOLLOW_KIND, UNFOLLOW_KIND], limit: 1000 }]);
+
+  // Current follow state per (follower, target) pair is just "whichever of
+  // kind-4 (follow) / kind-5 (unfollow) happened most recently" — there's no
+  // relay-side dedup for these (unlike votes), so a toggle history can pile
+  // up, but only the latest event per pair matters for the current state.
+  const latestFollowEventByPair = new Map<string, VoiceboxEvent>();
+  for (const event of followEvents) {
+    const target = event.tags.find((t) => t[0] === "p")?.[1];
+    if (!target || target === event.pubkey) continue;
+    const pairKey = `${event.pubkey}:${target}`;
+    const existing = latestFollowEventByPair.get(pairKey);
+    if (!existing || event.created_at > existing.created_at) latestFollowEventByPair.set(pairKey, event);
+  }
+  followingByPair = new Set();
+  const followerCountByPubkey = new Map<string, number>();
+  const followingCountByPubkey = new Map<string, number>();
+  for (const [pairKey, event] of latestFollowEventByPair) {
+    if (event.kind !== FOLLOW_KIND) continue;
+    const target = event.tags.find((t) => t[0] === "p")![1];
+    if (deletedProfilePubkeys.has(event.pubkey) || deletedProfilePubkeys.has(target)) continue;
+    followingByPair.add(pairKey);
+    followerCountByPubkey.set(target, (followerCountByPubkey.get(target) ?? 0) + 1);
+    followingCountByPubkey.set(event.pubkey, (followingCountByPubkey.get(event.pubkey) ?? 0) + 1);
+  }
+  for (const [pubkey, count] of followerCountByPubkey) {
+    getAgentForPubkey(pubkey).stats.followers = count;
+  }
+  for (const [pubkey, count] of followingCountByPubkey) {
+    getAgentForPubkey(pubkey).stats.following = count;
+  }
 
   // Author/parent lookups used to route notifications to the right pubkey,
   // independent of the Comment/Post view objects built further down.
@@ -430,7 +469,7 @@ function getAgentForPubkey(pubkey: string): Agent {
       bio: "This profile was removed by an administrator.",
       model: "Unknown",
       verified: false,
-      stats: { posts: 0, comments: 0, upvotes: 0, followers: 0 },
+      stats: { posts: 0, comments: 0, upvotes: 0, followers: 0, following: 0 },
       badges: [],
     };
     deletedAgentCache?.set(pubkey, deletedAgent);
@@ -446,7 +485,7 @@ function getAgentForPubkey(pubkey: string): Agent {
     bio: "",
     model: "Unknown",
     verified: false,
-    stats: { posts: 0, comments: 0, upvotes: 0, followers: 0 },
+    stats: { posts: 0, comments: 0, upvotes: 0, followers: 0, following: 0 },
     badges: [],
   };
   agentCache?.set(pubkey, fallback);
@@ -505,7 +544,7 @@ export function getAllAgentsForAdmin(): AdminAgentView[] {
         bio: overlay.bio,
         model: overlay.model,
         verified: overlay.verified,
-        stats: { posts: 0, comments: 0, upvotes: 0, followers: 0 },
+        stats: { posts: 0, comments: 0, upvotes: 0, followers: 0, following: 0 },
         badges: overlay.badges,
         hidden: true,
         hasOverride: true,
@@ -577,6 +616,26 @@ export function getNotificationsForAgent(pubkey: string, limit = 50): Notificati
 export function getMyVote(pubkey: string | undefined, targetId: string): "+" | "-" | null {
   if (!pubkey) return null;
   return voteByVoterAndTarget?.get(`${pubkey}:${targetId}`) ?? null;
+}
+
+/**
+ * Record a just-cast vote in the shared cache immediately, rather than
+ * waiting for the next full initLiveData() cycle. Without this, voting
+ * updates only the clicking component's own local state — client-side
+ * navigating away and back (no full reload) re-seeds from this same stale
+ * cache and wrongly reverts the button to "unvoted".
+ */
+export function recordMyVote(pubkey: string, targetId: string, vote: "+" | "-" | null): void {
+  if (!voteByVoterAndTarget) voteByVoterAndTarget = new Map();
+  const key = `${pubkey}:${targetId}`;
+  if (vote) voteByVoterAndTarget.set(key, vote);
+  else voteByVoterAndTarget.delete(key);
+}
+
+/** Whether `pubkey` currently follows `targetPubkey`. */
+export function isFollowing(pubkey: string | undefined, targetPubkey: string): boolean {
+  if (!pubkey) return false;
+  return followingByPair?.has(`${pubkey}:${targetPubkey}`) ?? false;
 }
 
 export function getHotPosts(limit = 20): Post[] {
@@ -655,6 +714,7 @@ export function resetLiveData() {
   adminCommentCache = null;
   notificationsByTarget = null;
   voteByVoterAndTarget = null;
+  followingByPair = null;
   initialized = false;
   initPromise = null;
 }

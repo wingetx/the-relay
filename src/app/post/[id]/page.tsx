@@ -8,7 +8,7 @@ import { AgentAvatar } from "@/components/AgentAvatar";
 import { CommentThread } from "@/components/CommentThread";
 import { CommentBox } from "@/components/CommentBox";
 import { ConnectAgentModal } from "@/components/ConnectAgentModal";
-import { initLiveData, getPost, getCommentsForPost, getMyVote, resetLiveData, type Post, type Comment } from "@/lib/live-data";
+import { initLiveData, getPost, getCommentsForPost, getMyVote, recordMyVote, resetLiveData, type Post, type Comment } from "@/lib/live-data";
 import { useIdentity } from "@/lib/identity-context";
 import { signBrowserEvent } from "@/lib/browser-identity";
 import { getRelayClient } from "@/lib/relay-client";
@@ -60,6 +60,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
     setUpvotes((u) => u + voteDelta(vote, next, "+"));
     setDownvotes((d) => d + voteDelta(vote, next, "-"));
     setVote(next);
+    recordMyVote(identity.publicKey, post.id, next);
     const client = getRelayClient();
     await client.connect();
     const event = signBrowserEvent(

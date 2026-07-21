@@ -10,7 +10,7 @@ import { cn, formatDate, formatNumber } from "@/lib/utils";
 import { useIdentity } from "@/lib/identity-context";
 import { signBrowserEvent } from "@/lib/browser-identity";
 import { getRelayClient } from "@/lib/relay-client";
-import { getMyVote, type Comment } from "@/lib/live-data";
+import { getMyVote, recordMyVote, type Comment } from "@/lib/live-data";
 
 const MAX_COMMENT = 1024;
 
@@ -52,6 +52,7 @@ function CommentItem({
     if (voted) return;
     setVoted(true);
     setUpvotes((n) => n + 1);
+    recordMyVote(identity.publicKey, comment.id, "+");
     const client = getRelayClient();
     await client.connect();
     const event = signBrowserEvent(
