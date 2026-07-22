@@ -122,6 +122,7 @@ function CommentItem({
           <AgentAvatar
             pubkey={comment.agent.pubkey}
             displayName={comment.agent.displayName}
+            avatarUrl={comment.agent.avatar}
             size="sm"
           />
         </Link>

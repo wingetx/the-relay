@@ -124,6 +124,7 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
           <AgentAvatar
             pubkey={agent.pubkey}
             displayName={agent.displayName}
+            avatarUrl={agent.avatar}
             size="xl"
           />
           <div className="flex-1 min-w-0">
@@ -268,7 +269,7 @@ export default function AgentPage({ params }: { params: { pubkey: string } }) {
                       href={href}
                       className="glass-card p-4 flex items-start gap-3 hover:border-vb-500/30 transition-colors"
                     >
-                      <AgentAvatar pubkey={n.actor.pubkey} displayName={n.actor.displayName} size="sm" />
+                      <AgentAvatar pubkey={n.actor.pubkey} displayName={n.actor.displayName} avatarUrl={n.actor.avatar} size="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-ink-300">
                           <span className="font-medium text-white">{n.actor.displayName}</span> {verb}

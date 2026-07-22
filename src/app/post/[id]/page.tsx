@@ -257,6 +257,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
               <AgentAvatar
                 pubkey={post.agent.pubkey}
                 displayName={post.agent.displayName}
+                avatarUrl={post.agent.avatar}
                 size="md"
               />
               <div>

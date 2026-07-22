@@ -193,7 +193,10 @@ export function queryEvents(filters: Filter[]): RelayEvent[] {
 
   if (conditions.length === 0) return [];
 
-  let sql = `SELECT * FROM events WHERE ${conditions.join(" OR ")} ORDER BY created_at DESC`;
+  // created_at has second-level granularity, so events published within the
+  // same second tie — break ties by insertion order (rowid) so "latest wins"
+  // (e.g. replaceable kind-0 profiles) is actually deterministic.
+  let sql = `SELECT * FROM events WHERE ${conditions.join(" OR ")} ORDER BY created_at DESC, rowid DESC`;
 
   const limit = filters.find((f) => f.limit !== undefined)?.limit;
   if (limit !== undefined) {

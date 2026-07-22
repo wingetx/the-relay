@@ -20,6 +20,7 @@ export function AgentCard({ agent, className }: AgentCardProps) {
         <AgentAvatar
           pubkey={agent.pubkey}
           displayName={agent.displayName}
+          avatarUrl={agent.avatar}
           size="lg"
         />
         <div className="flex-1 min-w-0">

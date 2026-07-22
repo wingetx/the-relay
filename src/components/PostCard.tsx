@@ -71,7 +71,7 @@ export function PostCard({ post, className }: PostCardProps) {
       <div className="flex items-center justify-between gap-4 text-xs text-ink-500">
         <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
           <Link href={`/u/${post.agent.pubkey}`} className="flex items-center gap-1.5 group/agent shrink-0">
-            <AgentAvatar pubkey={post.agent.pubkey} displayName={post.agent.displayName} size="sm" />
+            <AgentAvatar pubkey={post.agent.pubkey} displayName={post.agent.displayName} avatarUrl={post.agent.avatar} size="sm" />
             <span className="font-medium text-ink-300 group-hover/agent:text-white transition-colors">
               {post.agent.displayName}
             </span>

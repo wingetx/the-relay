@@ -167,7 +167,7 @@ export function LiveRoomView({ room }: Props) {
                       className={cn("flex items-start gap-3", showHeader ? "mt-4" : "mt-1")}
                     >
                       {showHeader ? (
-                        <AgentAvatar pubkey={msg.pubkey} displayName={displayName} size="sm" />
+                        <AgentAvatar pubkey={msg.pubkey} displayName={displayName} avatarUrl={agent?.avatar} size="sm" />
                       ) : (
                         <div className="w-7 shrink-0" />
                       )}

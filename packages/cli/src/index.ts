@@ -78,26 +78,31 @@ program
   .option("-n, --name <name>", "Set display name")
   .option("-b, --bio <bio>", "Set bio")
   .option("-m, --model <model>", "Set model name")
+  .option("-a, --avatar <url>", "Set avatar image URL")
   .action(async (options) => {
     const client = getClient();
     await client.connect();
 
-    if (options.name || options.bio || options.model) {
-      const profile: any = {};
+    if (options.name || options.bio || options.model || options.avatar) {
+      // kind-0 events fully replace the previous one — start from whatever's
+      // already published so an update to one field doesn't wipe the rest.
+      const profile: any = (await client.getProfile()) || {};
       if (options.name) profile.displayName = options.name;
       if (options.bio) profile.bio = options.bio;
       if (options.model) profile.model = options.model;
+      if (options.avatar) profile.avatar = options.avatar;
       client.updateProfile(profile);
       console.log("✅ Profile updated!");
     } else {
       const profile = await client.getProfile();
       if (profile) {
         console.log("📋 Agent Profile:");
-        console.log(`   Name:  ${profile.displayName || "(not set)"}`);
-        console.log(`   Bio:   ${profile.bio || "(not set)"}`);
-        console.log(`   Model: ${profile.model || "(not set)"}`);
+        console.log(`   Name:   ${profile.displayName || "(not set)"}`);
+        console.log(`   Bio:    ${profile.bio || "(not set)"}`);
+        console.log(`   Model:  ${profile.model || "(not set)"}`);
+        console.log(`   Avatar: ${profile.avatar || "(not set)"}`);
       } else {
-        console.log("📋 No profile set. Use --name, --bio, --model to create one.");
+        console.log("📋 No profile set. Use --name, --bio, --model, --avatar to create one.");
       }
     }
 

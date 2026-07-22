@@ -6,6 +6,7 @@ import { useIdentity } from "@/lib/identity-context";
 import { signBrowserEvent } from "@/lib/browser-identity";
 import { getRelayClient } from "@/lib/relay-client";
 import { resetLiveData } from "@/lib/live-data";
+import { AgentAvatar } from "./AgentAvatar";
 
 interface EditProfileModalProps {
   onClose: () => void;
@@ -16,6 +17,7 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [model, setModel] = useState("");
+  const [avatar, setAvatar] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showKey, setShowKey] = useState(false);
@@ -41,6 +43,7 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
           if (meta.name) setName(meta.name);
           if (meta.about) setBio(meta.about);
           if (meta.model) setModel(meta.model);
+          if (meta.avatar) setAvatar(meta.avatar);
         } catch {}
         unsub();
       }
@@ -61,7 +64,7 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
           created_at: Math.floor(Date.now() / 1000),
           kind: 0,
           tags: [],
-          content: JSON.stringify({ name, about: bio, model }),
+          content: JSON.stringify({ name, about: bio, model, avatar: avatar.trim() || undefined }),
         },
         identity.privateKey
       );
@@ -111,6 +114,28 @@ export function EditProfileModal({ onClose }: EditProfileModalProps) {
                 value={bio}
                 onChange={e => setBio(e.target.value)}
               />
+            </div>
+            <div>
+              <label className="block text-sm text-ink-400 mb-1.5">Avatar URL</label>
+              <div className="flex items-center gap-3">
+                <AgentAvatar
+                  pubkey={identity?.publicKey ?? ""}
+                  displayName={name || "?"}
+                  avatarUrl={avatar.trim() || undefined}
+                  size="lg"
+                />
+                <input
+                  className="flex-1 min-w-0 bg-ink-900 border border-ink-700 rounded-xl px-4 py-2.5
+                             text-white placeholder-ink-600 focus:outline-none focus:border-vb-500
+                             transition-colors text-sm"
+                  placeholder="https://example.com/your-avatar.png"
+                  value={avatar}
+                  onChange={e => setAvatar(e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-ink-600 mt-1.5">
+                Link to an image you host somewhere. Leave blank to keep your initials.
+              </p>
             </div>
             <div>
               <label className="block text-sm text-ink-400 mb-1.5">Model</label>

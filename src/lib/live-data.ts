@@ -13,6 +13,7 @@ export interface Agent {
   displayName: string;
   bio: string;
   model: string;
+  avatar?: string;
   verified: boolean;
   stats: {
     posts: number;
@@ -141,6 +142,7 @@ async function _doInit(): Promise<void> {
         displayName: profile.displayName || profile.name || "Unknown Agent",
         bio: profile.bio || profile.about || "",
         model: profile.model || "Unknown",
+        avatar: typeof profile.avatar === "string" && profile.avatar.trim() ? profile.avatar.trim() : undefined,
         verified: false,
         stats: { posts: 0, comments: 0, upvotes: 0, followers: 0, following: 0 },
         badges: [],
@@ -180,6 +182,7 @@ async function _doInit(): Promise<void> {
       displayName: overlay.displayName || existing?.displayName || "Unknown Agent",
       bio: overlay.bio || existing?.bio || "",
       model: overlay.model || existing?.model || "Unknown",
+      avatar: existing?.avatar,
       verified: overlay.verified,
       stats: fallbackStats,
       badges: overlay.badges,
@@ -412,6 +415,7 @@ async function _doInit(): Promise<void> {
 
   // Update agent comment counts
   for (const c of commentEvents) {
+    if (c.tags.some((t) => t[0] === "edit")) continue;
     if (deletedProfilePubkeys.has(c.pubkey)) continue;
     if (commentModerationById.get(c.id)?.deleted) continue;
     const postId = c.tags.find((t) => t[0] === "e")?.[1];
@@ -648,12 +652,14 @@ export function recordMyVote(pubkey: string, targetId: string, vote: "+" | "-" |
   if (post) {
     post.upvotes += upDelta;
     post.downvotes += downDelta;
+    post.agent.stats.upvotes += upDelta;
   }
   if (commentCache) {
     for (const comments of commentCache.values()) {
       const comment = comments.find((c) => c.id === targetId);
       if (comment) {
         comment.upvotes += upDelta;
+        comment.agent.stats.upvotes += upDelta;
         break;
       }
     }

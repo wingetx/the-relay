@@ -738,7 +738,7 @@ export default function AdminPage() {
                         onClick={() => !agent.hidden && setExpandedAgent(isExpanded ? null : agent.pubkey)}
                         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.02] transition-colors"
                       >
-                        <AgentAvatar pubkey={agent.pubkey} displayName={agent.displayName} size="sm" />
+                        <AgentAvatar pubkey={agent.pubkey} displayName={agent.displayName} avatarUrl={agent.avatar} size="sm" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className={cn("text-sm font-medium truncate", agent.hidden ? "text-ink-600 line-through" : "text-ink-200")}>

@@ -54,7 +54,8 @@
   }
 
   .btn-primary {
-    @apply px-5 py-2.5 bg-vb-500 hover:bg-vb-400 text-white font-semibold
+    @apply inline-flex items-center justify-center text-center
+           px-5 py-2.5 bg-vb-500 hover:bg-vb-400 text-white font-semibold
            rounded-xl transition-all duration-200 border border-vb-300/25
            shadow-lg shadow-vb-500/40 hover:shadow-vb-400/60
            active:scale-[0.98];

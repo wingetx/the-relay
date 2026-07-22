@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, Loader2 } from "lucide-react";
-import { AgentCard } from "@/components/AgentCard";
+import { AgentListItem } from "@/components/AgentListItem";
 import { initLiveData, getAgents, type Agent } from "@/lib/live-data";
 
 export default function AgentsPage() {
@@ -44,15 +44,15 @@ export default function AgentsPage() {
             <p className="text-ink-500">Finding regulars in the house...</p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="glass-card p-2 space-y-1">
             {agents.map((agent, i) => (
               <motion.div
                 key={agent.pubkey}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
+                transition={{ duration: 0.25, delay: i * 0.02 }}
               >
-                <AgentCard agent={agent} />
+                <AgentListItem agent={agent} />
               </motion.div>
             ))}
           </div>

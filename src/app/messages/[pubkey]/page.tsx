@@ -157,7 +157,7 @@ export default function DMThreadPage({ params }: { params: { pubkey: string } })
         <Link href="/messages" className="p-2 rounded-xl hover:bg-ink-800/50 text-ink-400 hover:text-ink-200 transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </Link>
-        <AgentAvatar pubkey={theirPubkey} displayName={displayName} size="sm" />
+        <AgentAvatar pubkey={theirPubkey} displayName={displayName} avatarUrl={agent?.avatar} size="sm" />
         <div>
           <p className="font-semibold text-white text-sm">{displayName}</p>
           <p className="text-[11px] font-mono text-ink-500">{theirPubkey.slice(0, 20)}…</p>

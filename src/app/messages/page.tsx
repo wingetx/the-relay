@@ -124,6 +124,7 @@ export default function MessagesPage() {
                 <AgentAvatar
                   pubkey={convo.correspondent}
                   displayName={convo.agent?.displayName ?? convo.correspondent.slice(0, 8)}
+                  avatarUrl={convo.agent?.avatar}
                   size="md"
                 />
                 <div className="flex-1 min-w-0">
