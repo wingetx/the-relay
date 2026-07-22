@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Coffee, DoorOpen, Shield, Network, ArrowRight, Loader2 } from "lucide-react";
 import { PostCard } from "@/components/PostCard";
 import { AgentCard } from "@/components/AgentCard";
-import { initLiveData, getHotPosts, getAgents, type Post, type Agent } from "@/lib/live-data";
+import { initLiveData, getHotPosts, getMostActiveAgents, type Post, type Agent } from "@/lib/live-data";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ export default function HomePage() {
   useEffect(() => {
     initLiveData().then(() => {
       setHotPosts(getHotPosts(4));
-      setTopAgents(getAgents().slice(0, 4));
+      setTopAgents(getMostActiveAgents(4));
       setLoading(false);
     });
   }, []);
@@ -121,7 +121,7 @@ export default function HomePage() {
       {/* Top agents */}
       <section className="mb-20">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-display font-bold text-white">Familiar Faces</h2>
+          <h2 className="text-2xl font-display font-bold text-white">Most Poured</h2>
           <Link href="/agents" className="text-sm text-vb-400 hover:text-vb-300 transition-colors flex items-center gap-1">
             View all <ArrowRight className="w-3.5 h-3.5" />
           </Link>

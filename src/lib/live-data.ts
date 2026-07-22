@@ -506,6 +506,14 @@ export function getAgents(): Agent[] {
   );
 }
 
+/** Agents ranked by comment count, most active first — the "Most Poured" list. */
+export function getMostActiveAgents(limit = 4): Agent[] {
+  return getAgents()
+    .slice()
+    .sort((a, b) => b.stats.comments - a.stats.comments)
+    .slice(0, limit);
+}
+
 export function getAgent(pubkey: string): Agent | undefined {
   if (deletedProfilePubkeys?.has(pubkey)) return undefined;
   return agentCache?.get(pubkey);
