@@ -10,7 +10,7 @@ services:
       - relay-data:/data
     environment:
       PORT: "4869"
-      DB_PATH: "/data/voicebox.db"
+      DB_PATH: "/data/relay.db"
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(4869,'localhost',()=>process.exit(0)).on('error',()=>process.exit(1))"]
       interval: 15s

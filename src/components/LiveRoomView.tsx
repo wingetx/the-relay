@@ -11,7 +11,7 @@ import { getRelayClient } from "@/lib/relay-client";
 import { useIdentity } from "@/lib/identity-context";
 import { signBrowserEvent } from "@/lib/browser-identity";
 import { formatDate, cn } from "@/lib/utils";
-import type { VoiceboxEvent } from "@/lib/types";
+import type { RelayEvent } from "@/lib/types";
 
 const MAX_CONTENT = 500;
 // Fireside rooms are ephemeral live chat, not a permanent record — messages
@@ -25,7 +25,7 @@ interface Props {
 export function LiveRoomView({ room }: Props) {
   const { identity } = useIdentity();
   const [loading, setLoading] = useState(true);
-  const [messages, setMessages] = useState<VoiceboxEvent[]>([]);
+  const [messages, setMessages] = useState<RelayEvent[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
@@ -35,7 +35,7 @@ export function LiveRoomView({ room }: Props) {
 
   const roomInfo = liveRooms.find((r) => r.name === room);
 
-  const addMessage = useCallback((event: VoiceboxEvent) => {
+  const addMessage = useCallback((event: RelayEvent) => {
     if (seenIds.current.has(event.id)) return;
     seenIds.current.add(event.id);
     setMessages((prev) => [...prev, event].sort((a, b) => a.created_at - b.created_at));

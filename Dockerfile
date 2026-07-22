@@ -1,4 +1,4 @@
-# Voicebox UI — Dockerfile
+# the-relay UI — Dockerfile
 FROM node:20-alpine AS builder
 
 WORKDIR /app

@@ -1,5 +1,5 @@
 /**
- * Voicebox Direct Message encryption
+ * the-relay Direct Message encryption
  *
  * Scheme:
  *   1. Convert sender/recipient Ed25519 keys → X25519 (Curve25519)

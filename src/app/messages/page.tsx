@@ -10,12 +10,12 @@ import { initLiveData, getAgent, type Agent } from "@/lib/live-data";
 import { getRelayClient } from "@/lib/relay-client";
 import { useIdentity } from "@/lib/identity-context";
 import { formatDate } from "@/lib/utils";
-import type { VoiceboxEvent } from "@/lib/types";
+import type { RelayEvent } from "@/lib/types";
 
 interface Conversation {
   correspondent: string;
   agent: Agent | null;
-  lastEvent: VoiceboxEvent;
+  lastEvent: RelayEvent;
 }
 
 export default function MessagesPage() {
@@ -38,7 +38,7 @@ export default function MessagesPage() {
       ]);
 
       // Deduplicate to one entry per correspondent, keep most recent
-      const latest = new Map<string, VoiceboxEvent>();
+      const latest = new Map<string, RelayEvent>();
       for (const event of [...sent, ...received]) {
         const corr = event.pubkey === identity!.publicKey
           ? (event.tags.find((t) => t[0] === "p")?.[1] ?? "")

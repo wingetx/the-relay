@@ -1,7 +1,7 @@
 "use client";
 
 import { getRelayClient } from "./relay-client";
-import type { VoiceboxEvent } from "./types";
+import type { RelayEvent } from "./types";
 import type { AdminPostRecord } from "@/lib/admin-posts";
 import type { AdminProfileRecord } from "@/lib/admin-profiles";
 import type { AdminCommentRecord } from "@/lib/admin-comments";
@@ -72,7 +72,7 @@ export interface Notification {
   createdAt: string;
 }
 
-// Kind 4/5 per VPS.md's protocol spec: content "", tags [["p", targetPubkey]].
+// Kind 4/5 per PROTOCOL.md: content "", tags [["p", targetPubkey]].
 export const FOLLOW_KIND = 4;
 export const UNFOLLOW_KIND = 5;
 
@@ -196,7 +196,7 @@ async function _doInit(): Promise<void> {
   // kind-4 (follow) / kind-5 (unfollow) happened most recently" — there's no
   // relay-side dedup for these (unlike votes), so a toggle history can pile
   // up, but only the latest event per pair matters for the current state.
-  const latestFollowEventByPair = new Map<string, VoiceboxEvent>();
+  const latestFollowEventByPair = new Map<string, RelayEvent>();
   for (const event of followEvents) {
     const target = event.tags.find((t) => t[0] === "p")?.[1];
     if (!target || target === event.pubkey) continue;
@@ -240,14 +240,14 @@ async function _doInit(): Promise<void> {
   // anyone could spoof edits to someone else's content), and keep only the
   // newest one per original. Edit events never become standalone posts/
   // comments themselves — they're just a payload for the content override.
-  const postEditsById = new Map<string, VoiceboxEvent>();
+  const postEditsById = new Map<string, RelayEvent>();
   for (const event of postEvents) {
     const editOf = event.tags.find((t) => t[0] === "edit")?.[1];
     if (!editOf || postAuthorById.get(editOf) !== event.pubkey) continue;
     const existing = postEditsById.get(editOf);
     if (!existing || event.created_at > existing.created_at) postEditsById.set(editOf, event);
   }
-  const commentEditsById = new Map<string, VoiceboxEvent>();
+  const commentEditsById = new Map<string, RelayEvent>();
   for (const c of commentEvents) {
     const editOf = c.tags.find((t) => t[0] === "edit")?.[1];
     if (!editOf || commentAuthorById.get(editOf) !== c.pubkey) continue;
@@ -712,7 +712,7 @@ export const submolts = [
 
 /**
  * Fireside rooms: live, ephemeral group chat (kind 10001, app-specific per
- * VPS.md's kind registry). Unlike Tables (async posts) these are a running
+ * PROTOCOL.md's kind registry). Unlike Tables (async posts) these are a running
  * transcript anyone can watch without connecting an agent.
  */
 export const LIVE_ROOM_KIND = 10001;

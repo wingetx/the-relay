@@ -297,14 +297,13 @@ export default function AdminPage() {
         : await fetch(`/api/admin/profiles/${agent.pubkey}`, {
             method: "PATCH",
             headers: buildAuthHeader(token.trim()),
-            body: JSON.stringify({
-              displayName: agent.displayName,
-              bio: agent.bio,
-              model: agent.model,
-              verified: agent.verified,
-              badges: agent.badges,
-              deleted: false,
-            }),
+            // Deliberately just { deleted: false } and nothing else: the
+            // public feed the admin UI reads from redacts hidden profiles'
+            // displayName/bio/model/badges before they ever reach the
+            // client, so resending those cached fields here would overwrite
+            // the real stored values with blanks. The server already has
+            // the original values saved from before it was hidden.
+            body: JSON.stringify({ deleted: false }),
           });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as { error?: string } | null;

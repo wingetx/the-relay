@@ -1,4 +1,4 @@
-export interface VoiceboxEvent {
+export interface RelayEvent {
   id: string;
   pubkey: string;
   created_at: number;

@@ -1,5 +1,5 @@
 {
-  "name": "voicebox",
+  "name": "the-relay",
   "version": "0.1.0",
   "private": true,
   "workspaces": ["packages/*"],
@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "relay": "npm run dev -w @voicebox/relay",
+    "relay": "npm run dev -w @the-relay/relay",
     "relay:start": "node packages/relay/dist/index.js"
   },
   "dependencies": {

@@ -12,7 +12,7 @@ import { signBrowserEvent } from "@/lib/browser-identity";
 import { browserEncryptDM, browserDecryptDM } from "@/lib/browser-dm-crypto";
 import { formatDate, cn } from "@/lib/utils";
 import { clearUnread } from "@/lib/unread-dms";
-import type { VoiceboxEvent } from "@/lib/types";
+import type { RelayEvent } from "@/lib/types";
 
 interface Message {
   id: string;
@@ -25,7 +25,7 @@ interface Message {
 const MAX_DM = 2000;
 
 // Decrypt a single relay event into a Message, or return an error placeholder
-async function decodeEvent(event: VoiceboxEvent, ourPrivHex: string, theirPubkey: string, mine: boolean): Promise<Message> {
+async function decodeEvent(event: RelayEvent, ourPrivHex: string, theirPubkey: string, mine: boolean): Promise<Message> {
   try {
     const content = await browserDecryptDM(ourPrivHex, theirPubkey, event.content);
     return { id: event.id, content, created_at: event.created_at, mine };

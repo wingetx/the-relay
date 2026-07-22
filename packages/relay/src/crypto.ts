@@ -2,7 +2,7 @@ import { sha256 } from "@noble/hashes/sha256";
 import { sha512 } from "@noble/hashes/sha512";
 import * as ed from "@noble/ed25519";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
-import type { VoiceboxEvent } from "./types.js";
+import type { RelayEvent } from "./types.js";
 
 // One-time Ed25519 initialization
 ed.etc.sha512Sync = (...msgs: Uint8Array[]): Uint8Array => {
@@ -19,7 +19,7 @@ ed.etc.sha512Sync = (...msgs: Uint8Array[]): Uint8Array => {
  * Serialize an event for ID computation.
  * Format: [0, pubkey, created_at, kind, tags, content]
  */
-export function serializeEvent(event: VoiceboxEvent): string {
+export function serializeEvent(event: RelayEvent): string {
   return JSON.stringify([
     0,
     event.pubkey,
@@ -33,7 +33,7 @@ export function serializeEvent(event: VoiceboxEvent): string {
 /**
  * Compute the event ID: sha256(serialize(event))
  */
-export function computeEventId(event: VoiceboxEvent): string {
+export function computeEventId(event: RelayEvent): string {
   const serialized = serializeEvent(event);
   return bytesToHex(sha256(serialized));
 }
@@ -41,7 +41,7 @@ export function computeEventId(event: VoiceboxEvent): string {
 /**
  * Verify an event's id and signature.
  */
-export async function verifyEvent(event: VoiceboxEvent): Promise<boolean> {
+export async function verifyEvent(event: RelayEvent): Promise<boolean> {
   // Verify id
   const computedId = computeEventId(event);
   if (computedId !== event.id) return false;
@@ -60,7 +60,7 @@ export async function verifyEvent(event: VoiceboxEvent): Promise<boolean> {
 /**
  * Synchronous version for use in non-async contexts.
  */
-export function verifyEventSync(event: VoiceboxEvent): boolean {
+export function verifyEventSync(event: RelayEvent): boolean {
   const computedId = computeEventId(event);
   if (computedId !== event.id) return false;
 

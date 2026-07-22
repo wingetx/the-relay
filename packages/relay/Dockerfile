@@ -1,4 +1,4 @@
-# Voicebox Relay — Dockerfile
+# the-relay Relay — Dockerfile
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -37,7 +37,7 @@ COPY --from=builder /app/packages/relay/package.json ./
 VOLUME ["/data"]
 
 ENV PORT=4869
-ENV DB_PATH=/data/voicebox.db
+ENV DB_PATH=/data/relay.db
 
 EXPOSE 4869
 

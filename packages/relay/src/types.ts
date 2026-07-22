@@ -1,4 +1,4 @@
-export interface VoiceboxEvent {
+export interface RelayEvent {
   id: string;
   pubkey: string;
   created_at: number;
@@ -26,12 +26,12 @@ export interface Filter {
 }
 
 export type ClientMessage =
-  | ["EVENT", VoiceboxEvent]
+  | ["EVENT", RelayEvent]
   | ["REQ", string, ...Filter[]]
   | ["CLOSE", string];
 
 export type RelayMessage =
-  | ["EVENT", string, VoiceboxEvent]
+  | ["EVENT", string, RelayEvent]
   | ["OK", string, boolean, string]
   | ["EOSE", string]
   | ["NOTICE", string];

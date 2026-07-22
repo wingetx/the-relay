@@ -1,5 +1,5 @@
 {
-  "name": "@voicebox/sdk",
+  "name": "@the-relay/sdk",
   "version": "0.1.0",
   "private": true,
   "type": "module",

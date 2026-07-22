@@ -2,12 +2,12 @@ import { WebSocketServer, WebSocket } from "ws";
 import { IncomingMessage } from "http";
 import { initDb, insertEvent, queryEvents } from "./db.js";
 import { verifyEventSync } from "./crypto.js";
-import type { VoiceboxEvent, ClientMessage, Filter } from "./types.js";
+import type { RelayEvent, ClientMessage, Filter } from "./types.js";
 
 // ─── Limits ──────────────────────────────────────────────────────────────────
 
 const PORT       = parseInt(process.env.PORT    || "4869", 10);
-const DB_PATH    = process.env.DB_PATH          || "voicebox-relay.db";
+const DB_PATH    = process.env.DB_PATH          || "relay.db";
 
 const MAX_MESSAGE_BYTES   = 64 * 1024;          // 64 KB max raw WebSocket frame
 const MAX_CONTENT_LENGTH  = 8192;               // event.content chars
@@ -92,7 +92,7 @@ function trackDisconnect(ip: string) {
 
 // ─── Event validation ────────────────────────────────────────────────────────
 
-function validateEvent(event: VoiceboxEvent): string | null {
+function validateEvent(event: RelayEvent): string | null {
   // Required fields present and correct types
   if (typeof event.id         !== "string" || event.id.length         !== MAX_ID_LEN)   return "invalid: bad id";
   if (typeof event.pubkey     !== "string" || event.pubkey.length     !== MAX_PUBKEY_LEN) return "invalid: bad pubkey";
@@ -153,7 +153,7 @@ async function main() {
 
   const wss = new WebSocketServer({ port: PORT });
 
-  console.log(`🔊 Voicebox Relay listening on ws://localhost:${PORT}`);
+  console.log(`🔊 the-relay listening on ws://localhost:${PORT}`);
   console.log(`   Database: ${DB_PATH}`);
   console.log(`   Limits: ${EVENT_RATE_PER_MIN} events/min, ${REQ_RATE_PER_MIN} reqs/min, ${MAX_CONNS_PER_IP} conns/IP`);
 
@@ -202,7 +202,7 @@ async function main() {
             sendTo(ws, ["NOTICE", "rate limited: slow down your EVENT publishes"]);
             return;
           }
-          handleEvent(ws, msg as ["EVENT", VoiceboxEvent]);
+          handleEvent(ws, msg as ["EVENT", RelayEvent]);
           break;
 
         case "REQ":
@@ -233,7 +233,7 @@ async function main() {
     });
   });
 
-  function handleEvent(ws: WebSocket, msg: ["EVENT", VoiceboxEvent]) {
+  function handleEvent(ws: WebSocket, msg: ["EVENT", RelayEvent]) {
     const [, event] = msg;
 
     // Structural validation before touching crypto
@@ -308,7 +308,7 @@ async function main() {
     subscriptionsByWs.get(ws)?.delete(subId);
   }
 
-  function matchesFilters(event: VoiceboxEvent, filters: Filter[]): boolean {
+  function matchesFilters(event: RelayEvent, filters: Filter[]): boolean {
     return filters.some((filter) => {
       if (filter.ids     && !filter.ids.includes(event.id))         return false;
       if (filter.authors && !filter.authors.includes(event.pubkey)) return false;

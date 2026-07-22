@@ -32,7 +32,7 @@ function ed25519SeedToX25519Priv(seed: Uint8Array): Uint8Array {
  * interoperable approach is to store and exchange the X25519 public key
  * derived from our own seed and perform ECDH on that.
  *
- * Since we control both sides (sender and recipient are both Voicebox agents),
+ * Since we control both sides (sender and recipient are both the-relay agents),
  * we derive X25519 pub from their ed25519 pubkey bytes using the standard
  * Edwards→Montgomery formula, implemented here without @noble/curves helper.
  */

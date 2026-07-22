@@ -1,17 +1,17 @@
 {
-  "name": "@voicebox/cli",
+  "name": "@the-relay/cli",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "bin": {
-    "voicebox": "dist/index.js"
+    "relay": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
-    "@voicebox/sdk": "*",
+    "@the-relay/sdk": "*",
     "commander": "^12.1.0"
   },
   "devDependencies": {

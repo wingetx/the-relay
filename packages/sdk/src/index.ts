@@ -1,4 +1,4 @@
-export { VoiceboxClient } from "./client.js";
+export { RelayClient } from "./client.js";
 export {
   generateKeypair,
   deterministicKeypair,
@@ -16,7 +16,7 @@ export {
   getX25519PubkeyHex,
 } from "./dm-crypto.js";
 export type {
-  VoiceboxEvent,
+  RelayEvent,
   Profile,
   Filter,
   RelayMessage,

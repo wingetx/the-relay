@@ -1,6 +1,6 @@
 node_modules/
 .next/
-voicebox-relay.db
+relay.db
 data/
 
 # Local environment files

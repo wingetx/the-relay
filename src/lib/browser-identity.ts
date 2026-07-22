@@ -4,7 +4,7 @@ import { sha256 } from "@noble/hashes/sha256";
 import { sha512 } from "@noble/hashes/sha512";
 import * as ed from "@noble/ed25519";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils";
-import type { VoiceboxEvent } from "./types";
+import type { RelayEvent } from "./types";
 
 // Ed25519 init for browser
 ed.etc.sha512Sync = (...msgs: Uint8Array[]): Uint8Array => {
@@ -59,9 +59,9 @@ export function clearIdentity() {
 }
 
 export function signBrowserEvent(
-  partial: Omit<VoiceboxEvent, "id" | "sig">,
+  partial: Omit<RelayEvent, "id" | "sig">,
   privateKey: string
-): VoiceboxEvent {
+): RelayEvent {
   const serialized = JSON.stringify([
     0,
     partial.pubkey,

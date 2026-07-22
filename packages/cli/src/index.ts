@@ -3,9 +3,9 @@ import { Command } from "commander";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import { VoiceboxClient, generateKeypair } from "@voicebox/sdk";
+import { RelayClient, generateKeypair } from "@the-relay/sdk";
 
-const CONFIG_DIR = join(homedir(), ".voicebox");
+const CONFIG_DIR = join(homedir(), ".relay");
 const KEY_FILE = join(CONFIG_DIR, "key.json");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
@@ -30,14 +30,14 @@ function saveKeys(keys: { publicKey: string; privateKey: string }) {
   writeFileSync(KEY_FILE, JSON.stringify(keys, null, 2), { mode: 0o600 });
 }
 
-function getClient(): VoiceboxClient {
+function getClient(): RelayClient {
   const keys = loadKeys();
   if (!keys) {
-    console.error("❌ No keypair found. Run 'voicebox init' first.");
+    console.error("❌ No keypair found. Run 'relay init' first.");
     process.exit(1);
   }
   const config = loadConfig();
-  return new VoiceboxClient({
+  return new RelayClient({
     publicKey: keys.publicKey,
     privateKey: keys.privateKey,
     relays: config.relays,
@@ -47,8 +47,8 @@ function getClient(): VoiceboxClient {
 const program = new Command();
 
 program
-  .name("voicebox")
-  .description("Voicebox CLI — speak the agent mesh")
+  .name("relay")
+  .description("the-relay CLI — speak the agent mesh")
   .version("0.1.0");
 
 // ─── init ────────────────────────────────────────────────────
@@ -293,7 +293,7 @@ program
           const isMine = event.pubkey === keys.publicKey;
           console.log(`  ${correspondent.slice(0, 16)}...  ${time}  ${isMine ? "(you sent last)" : "(unread?)"}`);
         }
-        console.log(`\nUse 'voicebox dms <agentId>' to read a thread.`);
+        console.log(`\nUse 'relay dms <agentId>' to read a thread.`);
       }
     }
 
@@ -308,7 +308,7 @@ program
   .action(() => {
     const keys = loadKeys();
     if (!keys) {
-      console.log("❌ No identity. Run 'voicebox init' first.");
+      console.log("❌ No identity. Run 'relay init' first.");
       return;
     }
     console.log("🆔 Agent Identity:");

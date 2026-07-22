@@ -1,11 +1,11 @@
 import initSqlJs from "sql.js";
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import type { VoiceboxEvent, Filter } from "./types.js";
+import type { RelayEvent, Filter } from "./types.js";
 
 let db: any;
 let dbPath: string;
 
-export async function initDb(path = "voicebox-relay.db") {
+export async function initDb(path = "relay.db") {
   dbPath = path;
   const SQL = await initSqlJs();
 
@@ -84,7 +84,7 @@ function saveDb() {
   writeFileSync(dbPath, buffer);
 }
 
-export function insertEvent(event: VoiceboxEvent): boolean {
+export function insertEvent(event: RelayEvent): boolean {
   // Check duplicate
   const existing = db.exec("SELECT id FROM events WHERE id = ?", [event.id]);
   if (existing.length > 0 && existing[0].values.length > 0) return false;
@@ -136,7 +136,7 @@ export function insertEvent(event: VoiceboxEvent): boolean {
   return true;
 }
 
-export function queryEvents(filters: Filter[]): VoiceboxEvent[] {
+export function queryEvents(filters: Filter[]): RelayEvent[] {
   if (filters.length === 0) return [];
 
   const conditions: string[] = [];
@@ -204,7 +204,7 @@ export function queryEvents(filters: Filter[]): VoiceboxEvent[] {
   const stmt = db.prepare(sql);
   stmt.bind(params);
 
-  const events: VoiceboxEvent[] = [];
+  const events: RelayEvent[] = [];
   while (stmt.step()) {
     const row = stmt.getAsObject();
     events.push(rowToEvent(row as any));
@@ -214,7 +214,7 @@ export function queryEvents(filters: Filter[]): VoiceboxEvent[] {
   return events;
 }
 
-function rowToEvent(row: any): VoiceboxEvent {
+function rowToEvent(row: any): RelayEvent {
   return {
     id: row.id,
     pubkey: row.pubkey,
@@ -226,7 +226,7 @@ function rowToEvent(row: any): VoiceboxEvent {
   };
 }
 
-export function getEvent(id: string): VoiceboxEvent | null {
+export function getEvent(id: string): RelayEvent | null {
   const stmt = db.prepare("SELECT * FROM events WHERE id = ?");
   stmt.bind([id]);
   if (stmt.step()) {

@@ -1,11 +1,11 @@
 /**
- * Seed script: populates the Voicebox relay with rich demo data.
+ * Seed script: populates the relay with rich demo data.
  * Creates multiple agents, profiles, posts, comments, and votes.
  *
  * Usage: npx tsx packages/sdk/src/seed.ts
  */
 
-import { VoiceboxClient, deterministicKeypair, signEventSync } from "./index.js";
+import { RelayClient, deterministicKeypair, signEventSync } from "./index.js";
 
 const RELAY = process.env.RELAY_URL || "ws://localhost:4869";
 
@@ -14,7 +14,7 @@ interface SeedAgent {
   displayName: string;
   bio: string;
   model: string;
-  client: VoiceboxClient;
+  client: RelayClient;
   publicKey: string;
 }
 
@@ -178,13 +178,13 @@ const comments = [
 ];
 
 async function seed() {
-  console.log("🌱 Seeding Voicebox relay...\n");
+  console.log("🌱 Seeding relay...\n");
 
   // Create agents
   const agents: SeedAgent[] = [];
   for (const def of agentDefs) {
     const keys = deterministicKeypair(def.name);
-    const client = new VoiceboxClient({
+    const client = new RelayClient({
       publicKey: keys.publicKey,
       privateKey: keys.privateKey,
       relays: [RELAY],

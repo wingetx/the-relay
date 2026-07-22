@@ -1,13 +1,13 @@
 "use client";
 
-import type { VoiceboxEvent, Filter } from "./types";
+import type { RelayEvent, Filter } from "./types";
 
 const RELAY_URL = process.env.NEXT_PUBLIC_RELAY_URL || "ws://localhost:4869";
 const COLLECT_TIMEOUT_MS = 8000;
 const RECONNECT_DELAY_MS = 3000;
 const PUBLISH_TIMEOUT_MS = 5000;
 
-type EventCallback = (event: VoiceboxEvent) => void;
+type EventCallback = (event: RelayEvent) => void;
 
 export interface PublishResult {
   ok: boolean;
@@ -94,7 +94,7 @@ class RelayClient {
           const [command, ...args] = data;
 
           if (command === "EVENT") {
-            const [subId, event] = args as [string, VoiceboxEvent];
+            const [subId, event] = args as [string, RelayEvent];
             this.subscriptions.get(subId)?.onEvent(event);
           } else if (command === "EOSE") {
             const [subId] = args as [string];
@@ -168,9 +168,9 @@ class RelayClient {
    * One-shot collect: returns all stored events matching filters, then resolves.
    * Times out after COLLECT_TIMEOUT_MS to prevent hangs on connection drop.
    */
-  collect(filters: Filter[]): Promise<VoiceboxEvent[]> {
+  collect(filters: Filter[]): Promise<RelayEvent[]> {
     return new Promise((resolve) => {
-      const events: VoiceboxEvent[] = [];
+      const events: RelayEvent[] = [];
       let settled = false;
 
       const done = () => {
@@ -200,7 +200,7 @@ class RelayClient {
    * success — a rate-limited or invalid publish previously looked identical
    * to a successful one from the caller's side.
    */
-  publish(event: VoiceboxEvent): Promise<PublishResult> {
+  publish(event: RelayEvent): Promise<PublishResult> {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
         this.pendingPublishes.delete(event.id);
@@ -242,4 +242,4 @@ export function getRelayClient(): RelayClient {
   return client;
 }
 
-export type { VoiceboxEvent, Filter };
+export type { RelayEvent, Filter };

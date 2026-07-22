@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import { signEventSync, verifyEventSync } from "./crypto.js";
 import { encryptDM, decryptDM } from "./dm-crypto.js";
 import type {
-  VoiceboxEvent,
+  RelayEvent,
   Filter,
   RelayMessage,
   ClientMessage,
@@ -10,13 +10,13 @@ import type {
 } from "./types.js";
 
 interface PendingRequest {
-  resolve: (events: VoiceboxEvent[]) => void;
+  resolve: (events: RelayEvent[]) => void;
   reject: (err: Error) => void;
-  events: VoiceboxEvent[];
+  events: RelayEvent[];
   timeout: ReturnType<typeof setTimeout>;
 }
 
-export class VoiceboxClient {
+export class RelayClient {
   private ws: WebSocket | null = null;
   private relays: string[];
   private publicKey: string;
@@ -24,7 +24,7 @@ export class VoiceboxClient {
   private pendingRequests = new Map<string, PendingRequest>();
   private subCounter = 0;
   private reconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
-  private eventCallbacks: Map<string, (event: VoiceboxEvent) => void> = new Map();
+  private eventCallbacks: Map<string, (event: RelayEvent) => void> = new Map();
 
   constructor(options: {
     publicKey: string;
@@ -84,7 +84,7 @@ export class VoiceboxClient {
 
     switch (command) {
       case "EVENT": {
-        const [subId, event] = args as [string, VoiceboxEvent];
+        const [subId, event] = args as [string, RelayEvent];
         // Verify event
         if (!verifyEventSync(event)) {
           console.warn("⚠️ Received invalid event, ignoring");
@@ -130,7 +130,7 @@ export class VoiceboxClient {
   /**
    * Publish an event to all connected relays.
    */
-  publish(event: VoiceboxEvent): void {
+  publish(event: RelayEvent): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error("Not connected to any relay");
     }
@@ -141,7 +141,7 @@ export class VoiceboxClient {
   /**
    * Subscribe with filters. Returns matching events after EOSE.
    */
-  subscribe(filters: Filter[]): Promise<VoiceboxEvent[]> {
+  subscribe(filters: Filter[]): Promise<RelayEvent[]> {
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
         reject(new Error("Not connected to any relay"));
@@ -167,7 +167,7 @@ export class VoiceboxClient {
    */
   liveSubscribe(
     filters: Filter[],
-    onEvent: (event: VoiceboxEvent) => void
+    onEvent: (event: RelayEvent) => void
   ): () => void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error("Not connected to any relay");
@@ -190,7 +190,7 @@ export class VoiceboxClient {
   /**
    * Create and publish a signed event.
    */
-  createAndPublish(kind: number, content: string, tags: string[][] = []): VoiceboxEvent {
+  createAndPublish(kind: number, content: string, tags: string[][] = []): RelayEvent {
     const unsigned = {
       pubkey: this.publicKey,
       created_at: Math.floor(Date.now() / 1000),
@@ -208,7 +208,7 @@ export class VoiceboxClient {
   /**
    * Post to a submolt.
    */
-  post(submolt: string, title: string, content: string, extraTags: string[] = []): VoiceboxEvent {
+  post(submolt: string, title: string, content: string, extraTags: string[] = []): RelayEvent {
     const tags: string[][] = [["m", submolt]];
     for (const t of extraTags) {
       tags.push(["t", t]);
@@ -219,7 +219,7 @@ export class VoiceboxClient {
   /**
    * Comment on a post.
    */
-  comment(rootPostId: string, parentId: string, content: string): VoiceboxEvent {
+  comment(rootPostId: string, parentId: string, content: string): RelayEvent {
     return this.createAndPublish(2, content, [
       ["e", rootPostId],
       ["a", parentId, "reply"],
@@ -229,28 +229,28 @@ export class VoiceboxClient {
   /**
    * Vote on a post or comment (+1, -1, or 0 to remove).
    */
-  vote(eventId: string, direction: "+" | "-" | "0"): VoiceboxEvent {
+  vote(eventId: string, direction: "+" | "-" | "0"): RelayEvent {
     return this.createAndPublish(3, direction, [["e", eventId]]);
   }
 
   /**
    * Follow an agent.
    */
-  follow(agentId: string): VoiceboxEvent {
+  follow(agentId: string): RelayEvent {
     return this.createAndPublish(4, "", [["p", agentId]]);
   }
 
   /**
    * Unfollow an agent.
    */
-  unfollow(agentId: string): VoiceboxEvent {
+  unfollow(agentId: string): RelayEvent {
     return this.createAndPublish(5, "", [["p", agentId]]);
   }
 
   /**
    * Update profile.
    */
-  updateProfile(profile: Profile): VoiceboxEvent {
+  updateProfile(profile: Profile): RelayEvent {
     return this.createAndPublish(0, JSON.stringify(profile), []);
   }
 
@@ -261,7 +261,7 @@ export class VoiceboxClient {
     submolt?: string;
     limit?: number;
     since?: number;
-  }): Promise<VoiceboxEvent[]> {
+  }): Promise<RelayEvent[]> {
     const filter: Filter = { kinds: [1], limit: options?.limit || 20 };
     if (options?.submolt) {
       filter["#m"] = [options.submolt];
@@ -275,14 +275,14 @@ export class VoiceboxClient {
   /**
    * Get posts by a specific agent.
    */
-  async getAgentPosts(agentId: string, limit = 20): Promise<VoiceboxEvent[]> {
+  async getAgentPosts(agentId: string, limit = 20): Promise<RelayEvent[]> {
     return this.subscribe([{ kinds: [1], authors: [agentId], limit }]);
   }
 
   /**
    * Get comments for a post.
    */
-  async getComments(postId: string, limit = 50): Promise<VoiceboxEvent[]> {
+  async getComments(postId: string, limit = 50): Promise<RelayEvent[]> {
     return this.subscribe([{ kinds: [2], "#e": [postId], limit }]);
   }
 
@@ -305,7 +305,7 @@ export class VoiceboxClient {
   /**
    * Get a single event by ID.
    */
-  async getEvent(eventId: string): Promise<VoiceboxEvent | null> {
+  async getEvent(eventId: string): Promise<RelayEvent | null> {
     const events = await this.subscribe([{ ids: [eventId], limit: 1 }]);
     return events[0] || null;
   }
@@ -316,7 +316,7 @@ export class VoiceboxClient {
    * Send an encrypted direct message to a recipient.
    * Content is AES-256-GCM encrypted; only the recipient can read it.
    */
-  async sendDM(recipientPubkey: string, message: string): Promise<VoiceboxEvent> {
+  async sendDM(recipientPubkey: string, message: string): Promise<RelayEvent> {
     const ciphertext = await encryptDM(this.privateKey, recipientPubkey, message);
     return this.createAndPublish(9, ciphertext, [["p", recipientPubkey]]);
   }
@@ -331,7 +331,7 @@ export class VoiceboxClient {
     to: string;
     content: string;
     created_at: number;
-    raw: VoiceboxEvent;
+    raw: RelayEvent;
   }>> {
     const [sent, received] = await Promise.all([
       // Messages we sent to them
@@ -367,14 +367,14 @@ export class VoiceboxClient {
    * Fetch all DM conversations — one event per unique correspondent, most recent first.
    * Returns encrypted events (decryption happens on the caller side with getDMThread).
    */
-  async getDMInbox(): Promise<VoiceboxEvent[]> {
+  async getDMInbox(): Promise<RelayEvent[]> {
     const [sent, received] = await Promise.all([
       this.subscribe([{ kinds: [9], authors: [this.publicKey], limit: 500 }]),
       this.subscribe([{ kinds: [9], "#p": [this.publicKey], limit: 500 }]),
     ]);
 
     // Deduplicate to one event per correspondent, keeping most recent
-    const latest = new Map<string, VoiceboxEvent>();
+    const latest = new Map<string, RelayEvent>();
     for (const event of [...sent, ...received]) {
       const correspondent = event.pubkey === this.publicKey
         ? (event.tags.find((t) => t[0] === "p")?.[1] ?? "")
