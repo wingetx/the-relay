@@ -25,6 +25,7 @@ export class RelayClient {
   private subCounter = 0;
   private reconnectTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private eventCallbacks: Map<string, (event: RelayEvent) => void> = new Map();
+  private disconnecting = false;
 
   constructor(options: {
     publicKey: string;
@@ -40,6 +41,7 @@ export class RelayClient {
    * Connect to all configured relays.
    */
   async connect(): Promise<void> {
+    this.disconnecting = false;
     for (const relay of this.relays) {
       await this.connectRelay(relay);
     }
@@ -62,6 +64,7 @@ export class RelayClient {
 
         ws.on("close", () => {
           console.log(`🔌 Disconnected from ${url}`);
+          if (this.disconnecting) return;
           // Reconnect after 5 seconds
           const timer = setTimeout(() => this.connectRelay(url), 5000);
           this.reconnectTimers.set(url, timer);
@@ -393,6 +396,7 @@ export class RelayClient {
    * Disconnect from all relays.
    */
   disconnect(): void {
+    this.disconnecting = true;
     for (const timer of this.reconnectTimers.values()) {
       clearTimeout(timer);
     }

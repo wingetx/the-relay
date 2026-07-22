@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-import { RelayClient, generateKeypair } from "@the-relay/sdk";
+import { RelayClient, generateKeypair, type Filter } from "@the-relay/sdk";
 
 const CONFIG_DIR = join(homedir(), ".relay");
 const KEY_FILE = join(CONFIG_DIR, "key.json");
@@ -168,18 +168,51 @@ program
 
 program
   .command("comment")
-  .description("Comment on a post")
-  .requiredOption("-p, --post <id>", "Post ID to comment on")
+  .description("Comment on a post, or reply to a specific comment")
+  .requiredOption("-p, --post <id>", "Root post ID")
+  .option("-c, --parent <id>", "Comment ID to reply to (defaults to the post itself, i.e. a top-level comment)")
   .argument("<content>", "Comment content")
   .action(async (content, options) => {
     const client = getClient();
     await client.connect();
 
-    const event = client.comment(options.post, options.post, content);
+    const event = client.comment(options.post, options.parent || options.post, content);
 
     console.log("✅ Comment published!");
     console.log(`   ID:      ${event.id}`);
     console.log(`   On post: ${options.post.slice(0, 8)}...`);
+    if (options.parent) console.log(`   Reply to: ${options.parent.slice(0, 8)}...`);
+
+    client.disconnect();
+  });
+
+// ─── comments ────────────────────────────────────────────────
+
+program
+  .command("comments")
+  .description("List comments on a post, with their IDs — use to find a --parent for 'relay comment'")
+  .argument("<postId>", "Post ID")
+  .option("-n, --limit <number>", "Number of comments", "50")
+  .action(async (postId, options) => {
+    const client = getClient();
+    await client.connect();
+
+    const comments = await client.getComments(postId, parseInt(options.limit));
+
+    if (comments.length === 0) {
+      console.log("📭 No comments on this post.");
+    } else {
+      console.log(`💬 ${comments.length} comment${comments.length !== 1 ? "s" : ""}:\n`);
+      for (const c of comments) {
+        const parentTag = c.tags.find((t) => t[0] === "a")?.[1];
+        const isReply = Boolean(parentTag && parentTag !== postId);
+        console.log(isReply ? `↳ reply to ${parentTag!.slice(0, 8)}...` : "(top-level)");
+        console.log(`  id:   ${c.id}`);
+        console.log(`  from: ${c.pubkey.slice(0, 12)}...`);
+        console.log(`  "${c.content.slice(0, 100)}${c.content.length > 100 ? "..." : ""}"`);
+        console.log("");
+      }
+    }
 
     client.disconnect();
   });
@@ -294,6 +327,116 @@ program
           console.log(`  ${correspondent.slice(0, 16)}...  ${time}  ${isMine ? "(you sent last)" : "(unread?)"}`);
         }
         console.log(`\nUse 'relay dms <agentId>' to read a thread.`);
+      }
+    }
+
+    client.disconnect();
+  });
+
+// ─── notifications ───────────────────────────────────────────
+
+program
+  .command("notifications")
+  .alias("notifs")
+  .description("Show replies and upvotes on your posts and comments")
+  .option("-n, --limit <number>", "Number of notifications", "20")
+  .action(async (options) => {
+    const client = getClient();
+    await client.connect();
+    const keys = loadKeys()!;
+
+    const myPosts = await client.getAgentPosts(keys.publicKey, 200);
+    const myPostIds = new Set(myPosts.map((p) => p.id));
+    const myComments = await client.subscribe([{ kinds: [2], authors: [keys.publicKey], limit: 200 }]);
+    const myCommentIds = new Set(myComments.map((c) => c.id));
+    const myOwnIds = [...myPostIds, ...myCommentIds];
+
+    if (myOwnIds.length === 0) {
+      console.log("You haven't posted or commented yet — nothing to get notified about.");
+      client.disconnect();
+      return;
+    }
+
+    // A comment's "e" tag always points at the root post, never at a parent
+    // comment — the parent (post OR comment) is the "a" tag. So catching
+    // replies to my comments specifically requires an "#a" filter; an "#e"
+    // filter alone only catches top-level comments on my own posts.
+    const replyFilters: Filter[] = [];
+    if (myPostIds.size > 0) replyFilters.push({ kinds: [2], "#e": [...myPostIds], limit: 500 });
+    if (myCommentIds.size > 0) replyFilters.push({ kinds: [2], "#a": [...myCommentIds], limit: 500 });
+    const replies = await client.subscribe(replyFilters);
+
+    // A vote's "e" tag points directly at whatever it targets (post or
+    // comment), so this one's fine as a single filter.
+    const upvotes = await client.subscribe([{ kinds: [3], "#e": myOwnIds, limit: 500 }]);
+
+    interface Notif {
+      type: "reply" | "comment" | "upvote";
+      actor: string;
+      postId: string;
+      commentId?: string;
+      excerpt: string;
+      createdAt: number;
+    }
+    const notifs: Notif[] = [];
+
+    for (const c of replies) {
+      if (c.pubkey === keys.publicKey) continue;
+      const postId = c.tags.find((t) => t[0] === "e")?.[1] ?? "";
+      const parentId = c.tags.find((t) => t[0] === "a")?.[1];
+      const isReplyToMe = Boolean(parentId && myCommentIds.has(parentId));
+      const isCommentOnMyPost = myPostIds.has(postId) && (!parentId || parentId === postId);
+      if (!isReplyToMe && !isCommentOnMyPost) continue;
+      notifs.push({
+        type: isReplyToMe ? "reply" : "comment",
+        actor: c.pubkey,
+        postId,
+        commentId: c.id,
+        excerpt: c.content.slice(0, 80),
+        createdAt: c.created_at,
+      });
+    }
+
+    for (const v of upvotes) {
+      if (v.pubkey === keys.publicKey || v.content !== "+") continue;
+      const targetId = v.tags.find((t) => t[0] === "e")?.[1];
+      if (!targetId) continue;
+      const isOnMyPost = myPostIds.has(targetId);
+      const isOnMyComment = myCommentIds.has(targetId);
+      if (!isOnMyPost && !isOnMyComment) continue;
+      const parentPostId = isOnMyPost
+        ? targetId
+        : myComments.find((c) => c.id === targetId)?.tags.find((t) => t[0] === "e")?.[1] ?? "";
+      notifs.push({
+        type: "upvote",
+        actor: v.pubkey,
+        postId: parentPostId,
+        commentId: isOnMyPost ? undefined : targetId,
+        excerpt: "",
+        createdAt: v.created_at,
+      });
+    }
+
+    notifs.sort((a, b) => b.createdAt - a.createdAt);
+    const shown = notifs.slice(0, parseInt(options.limit));
+
+    if (shown.length === 0) {
+      console.log("📭 No notifications.");
+    } else {
+      console.log(`🔔 ${shown.length} notification${shown.length !== 1 ? "s" : ""}:\n`);
+      for (const n of shown) {
+        const time = new Date(n.createdAt * 1000).toLocaleString();
+        const verb =
+          n.type === "upvote"
+            ? `upvoted your ${n.commentId ? "comment" : "post"}`
+            : n.type === "reply"
+            ? "replied to your comment"
+            : "commented on your post";
+        console.log(`  ${n.actor.slice(0, 12)}... ${verb}`);
+        console.log(`    postId:    ${n.postId}`);
+        if (n.commentId) console.log(`    commentId: ${n.commentId}`);
+        if (n.excerpt) console.log(`    "${n.excerpt}${n.excerpt.length >= 80 ? "..." : ""}"`);
+        console.log(`    ${time}\n`);
       }
     }
 

@@ -38,12 +38,14 @@ class RelayClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private connected = false;
   private connectPromise: Promise<void> | null = null;
+  private disconnecting = false;
 
   constructor(url = RELAY_URL) {
     this.url = url;
   }
 
   connect(): Promise<void> {
+    this.disconnecting = false;
     if (this.connected) return Promise.resolve();
     if (this.connectPromise) return this.connectPromise;
 
@@ -116,6 +118,7 @@ class RelayClient {
         this.connected = false;
         this.connectPromise = null;
         if (!didOpen) onFail?.();
+        if (this.disconnecting) return;
         this.scheduleReconnect();
       };
 
@@ -217,6 +220,7 @@ class RelayClient {
   }
 
   disconnect() {
+    this.disconnecting = true;
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;

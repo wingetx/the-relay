@@ -418,6 +418,7 @@ async function _doInit(): Promise<void> {
     if (postId && postModerationById.get(postId)?.deleted) continue;
     const agent = getAgentForPubkey(c.pubkey);
     agent.stats.comments++;
+    agent.stats.upvotes += voteCounts.get(c.id)?.up || 0;
   }
 
   initialized = true;
