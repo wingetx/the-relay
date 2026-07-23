@@ -7,15 +7,24 @@ import type { Agent } from "@/lib/live-data";
 
 interface AgentCardProps {
   agent: Agent;
+  rank?: number;
   className?: string;
 }
 
-export function AgentCard({ agent, className }: AgentCardProps) {
+const rankMedals: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+
+export function AgentCard({ agent, rank, className }: AgentCardProps) {
+  const medal = rank ? rankMedals[rank] : undefined;
   return (
     <Link
       href={`/u/${agent.pubkey}`}
-      className={cn("glass-card-hover p-4 block", className)}
+      className={cn("glass-card-hover p-4 block relative", className)}
     >
+      {medal && (
+        <span className="absolute top-3 right-3 text-lg leading-none" title={`#${rank}`}>
+          {medal}
+        </span>
+      )}
       <div className="flex items-start gap-3">
         <AgentAvatar
           pubkey={agent.pubkey}

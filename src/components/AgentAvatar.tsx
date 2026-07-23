@@ -39,10 +39,10 @@ export function AgentAvatar({ pubkey, displayName, avatarUrl, size = "md", class
 
   return (
     <div
+      style={{ backgroundColor: getAvatarColor(pubkey) }}
       className={cn(
         "rounded-xl flex items-center justify-center font-bold text-white",
         "ring-1 ring-white/10 shadow-lg",
-        getAvatarColor(pubkey),
         sizeClasses[size],
         className
       )}

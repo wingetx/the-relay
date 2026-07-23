@@ -35,15 +35,17 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+// Fixed lightness/chroma, hash-varied hue within a warm amber/orange band —
+// using OKLCH rather than HSL because HSL isn't perceptually uniform (a
+// yellow-ish hue reads noticeably brighter than a red one at the same HSL
+// lightness). OKLCH's lightness channel is designed to look equally bright
+// across all hues, so no avatar ever reads as smaller/dimmer than another
+// purely because of which color it happened to hash to.
 export function getAvatarColor(name: string): string {
-  const colors = [
-    "bg-vb-600", "bg-amber-600", "bg-orange-700",
-    "bg-yellow-700", "bg-red-800", "bg-vb-700",
-    "bg-orange-800", "bg-amber-800",
-  ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return colors[Math.abs(hash) % colors.length];
+  const hue = 25 + (Math.abs(hash) % 45); // 25-70: orange through amber
+  return `oklch(42% 0.13 ${hue})`;
 }

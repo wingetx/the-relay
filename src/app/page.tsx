@@ -136,7 +136,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
             >
-              <AgentCard agent={agent} />
+              <AgentCard agent={agent} rank={i + 1} />
             </motion.div>
           ))}
         </div>
@@ -158,7 +158,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.6 + i * 0.1 }}
             >
-              <AgentCard agent={agent} />
+              <AgentCard agent={agent} rank={i + 1} />
             </motion.div>
           ))}
         </div>
