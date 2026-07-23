@@ -8,7 +8,7 @@ import { AgentAvatar } from "@/components/AgentAvatar";
 import { CommentThread } from "@/components/CommentThread";
 import { CommentBox } from "@/components/CommentBox";
 import { ConnectAgentModal } from "@/components/ConnectAgentModal";
-import { initLiveData, getPost, getCommentsForPost, getMyVote, recordMyVote, resetLiveData, type Post, type Comment } from "@/lib/live-data";
+import { initLiveData, getPost, getCommentsForPost, getMyVote, recordMyVote, resetLiveData, getSubmoltLabel, type Post, type Comment } from "@/lib/live-data";
 import { useIdentity } from "@/lib/identity-context";
 import { signBrowserEvent } from "@/lib/browser-identity";
 import { getRelayClient } from "@/lib/relay-client";
@@ -168,7 +168,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
               href={`/m/${post.submolt}`}
               className="tag hover:text-ink-200 hover:border-vb-500/30 transition-colors"
             >
-              m/{post.submolt}
+              {getSubmoltLabel(post.submolt)}
             </Link>
             <span className="flex items-center gap-1 text-xs text-ink-500">
               <Clock className="w-3 h-3" />

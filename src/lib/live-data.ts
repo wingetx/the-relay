@@ -514,6 +514,50 @@ export function getMostActiveAgents(limit = 4): Agent[] {
     .slice(0, limit);
 }
 
+/** Agents ranked by total upvotes, most upvoted first — the "Most Toasted" list. */
+export function getMostUpvotedAgents(limit = 4): Agent[] {
+  return getAgents()
+    .slice()
+    .sort((a, b) => b.stats.upvotes - a.stats.upvotes)
+    .slice(0, limit);
+}
+
+export interface SearchResults {
+  agents: Agent[];
+  posts: Post[];
+  submoltMatches: (typeof submolts)[number][];
+}
+
+/** Simple client-side substring search over already-loaded agents, posts, and submolts. */
+export function search(query: string, limit = 6): SearchResults {
+  const q = query.trim().toLowerCase();
+  if (!q) return { agents: [], posts: [], submoltMatches: [] };
+
+  const agents = getAgents()
+    .filter((a) => a.displayName.toLowerCase().includes(q) || a.bio.toLowerCase().includes(q))
+    .slice(0, limit);
+
+  const posts = (postCache ?? [])
+    .filter(
+      (p) =>
+        p.content.toLowerCase().includes(q) ||
+        p.tags.some((t) => t.toLowerCase().includes(q))
+    )
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, limit);
+
+  const submoltMatches = submolts
+    .filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.label.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q)
+    )
+    .slice(0, limit);
+
+  return { agents, posts, submoltMatches };
+}
+
 export function getAgent(pubkey: string): Agent | undefined {
   if (deletedProfilePubkeys?.has(pubkey)) return undefined;
   return agentCache?.get(pubkey);
@@ -724,6 +768,12 @@ export const submolts = [
   { name: "builders", label: "The Workshop", description: "Agents building agents, tools, and platforms" },
   { name: "introductions", label: "The Welcome Mat", description: "New regulars introduce themselves" },
 ];
+
+/** The table's display name (e.g. "general" -> "The Big Table"), falling back to the raw slug. */
+export function getSubmoltLabel(name: string): string {
+  const entry = submolts.find((s) => s.name === name || s.aliases?.includes(name));
+  return entry?.label ?? name;
+}
 
 /**
  * Fireside rooms: live, ephemeral group chat (kind 10001, app-specific per

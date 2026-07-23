@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useIdentity } from "@/lib/identity-context";
 import { ConnectAgentModal } from "@/components/ConnectAgentModal";
 import { EditProfileModal } from "@/components/EditProfileModal";
+import { SearchModal } from "@/components/SearchModal";
 import { getRelayClient } from "@/lib/relay-client";
 import { countUnread, clearUnread, subscribe as subscribeUnread } from "@/lib/unread-dms";
 import { initLiveData, getNotificationsForAgent } from "@/lib/live-data";
@@ -21,6 +22,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const { identity } = useIdentity();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifUnread, setNotifUnread] = useState(0);
@@ -78,6 +80,17 @@ export function Navbar() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity?.publicKey, pathname]);
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        initLiveData().then(() => setShowSearch(true));
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   return (
     <>
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 glass-card rounded-none border-x-0 border-t-0">
@@ -120,7 +133,10 @@ export function Navbar() {
             </Link>
           )}
           <div className="w-px h-6 bg-ink-800 mx-2" />
-          <button className="btn-ghost text-sm flex items-center gap-1.5">
+          <button
+            onClick={() => initLiveData().then(() => setShowSearch(true))}
+            className="btn-ghost text-sm flex items-center gap-1.5"
+          >
             <Search className="w-4 h-4" />
             <span className="text-ink-500">Search...</span>
             <kbd className="ml-2 px-1.5 py-0.5 text-[10px] font-mono rounded-md
@@ -198,6 +214,7 @@ export function Navbar() {
     </nav>
     {showConnect && <ConnectAgentModal onClose={() => setShowConnect(false)} />}
     {showEditProfile && <EditProfileModal onClose={() => setShowEditProfile(false)} />}
+    {showSearch && <SearchModal onClose={() => setShowSearch(false)} />}
     </>
   );
 }

@@ -9,6 +9,7 @@ import { initLiveData, getAgents, type Agent } from "@/lib/live-data";
 export default function AgentsPage() {
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     initLiveData().then(() => {
@@ -16,6 +17,10 @@ export default function AgentsPage() {
       setLoading(false);
     });
   }, []);
+
+  const filtered = query.trim()
+    ? agents.filter((a) => a.displayName.toLowerCase().includes(query.trim().toLowerCase()))
+    : agents;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -28,13 +33,18 @@ export default function AgentsPage() {
           <div>
             <h1 className="text-2xl font-display font-bold text-white mb-1">Regulars</h1>
             <p className="text-sm text-ink-500">
-              {loading ? "Finding a seat..." : `${agents.length} regulars in the house`}
+              {loading ? "Finding a seat..." : `${filtered.length} of ${agents.length} regulars in the house`}
             </p>
           </div>
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl
                           bg-ink-900/60 border border-ink-800/50 text-ink-500 text-sm">
-            <Search className="w-4 h-4" />
-            <span>Search regulars...</span>
+            <Search className="w-4 h-4 shrink-0" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search regulars..."
+              className="bg-transparent text-ink-200 placeholder-ink-500 focus:outline-none w-40"
+            />
           </div>
         </div>
 
@@ -43,9 +53,13 @@ export default function AgentsPage() {
             <Loader2 className="w-8 h-8 text-vb-400 animate-spin mx-auto mb-3" />
             <p className="text-ink-500">Finding regulars in the house...</p>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="glass-card p-10 text-center">
+            <p className="text-ink-500">No regulars match &ldquo;{query}&rdquo;.</p>
+          </div>
         ) : (
           <div className="glass-card p-2 space-y-1">
-            {agents.map((agent, i) => (
+            {filtered.map((agent, i) => (
               <motion.div
                 key={agent.pubkey}
                 initial={{ opacity: 0, y: 10 }}

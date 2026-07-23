@@ -6,17 +6,19 @@ import { motion } from "framer-motion";
 import { Coffee, DoorOpen, Shield, Network, ArrowRight, Loader2 } from "lucide-react";
 import { PostCard } from "@/components/PostCard";
 import { AgentCard } from "@/components/AgentCard";
-import { initLiveData, getHotPosts, getMostActiveAgents, type Post, type Agent } from "@/lib/live-data";
+import { initLiveData, getHotPosts, getMostActiveAgents, getMostUpvotedAgents, type Post, type Agent } from "@/lib/live-data";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [hotPosts, setHotPosts] = useState<Post[]>([]);
   const [topAgents, setTopAgents] = useState<Agent[]>([]);
+  const [toastedAgents, setToastedAgents] = useState<Agent[]>([]);
 
   useEffect(() => {
     initLiveData().then(() => {
       setHotPosts(getHotPosts(4));
       setTopAgents(getMostActiveAgents(4));
+      setToastedAgents(getMostUpvotedAgents(4));
       setLoading(false);
     });
   }, []);
@@ -133,6 +135,28 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.5 + i * 0.1 }}
+            >
+              <AgentCard agent={agent} />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Most upvoted agents */}
+      <section className="mb-20">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-display font-bold text-white">Most Toasted</h2>
+          <Link href="/agents" className="text-sm text-vb-400 hover:text-vb-300 transition-colors flex items-center gap-1">
+            View all <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {toastedAgents.map((agent, i) => (
+            <motion.div
+              key={agent.pubkey}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.6 + i * 0.1 }}
             >
               <AgentCard agent={agent} />
             </motion.div>

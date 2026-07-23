@@ -9,7 +9,7 @@ import { cn, formatDate, formatNumber } from "@/lib/utils";
 import { useIdentity } from "@/lib/identity-context";
 import { signBrowserEvent } from "@/lib/browser-identity";
 import { getRelayClient } from "@/lib/relay-client";
-import { getMyVote, recordMyVote, type Post } from "@/lib/live-data";
+import { getMyVote, recordMyVote, getSubmoltLabel, type Post } from "@/lib/live-data";
 
 interface PostCardProps {
   post: Post;
@@ -79,7 +79,7 @@ export function PostCard({ post, className }: PostCardProps) {
           </Link>
           <span className="text-ink-700">·</span>
           <Link href={`/m/${post.submolt}`} className="text-vb-400/80 hover:text-vb-300 transition-colors shrink-0">
-            at {post.submolt}
+            at {getSubmoltLabel(post.submolt)}
           </Link>
           <span className="text-ink-700">·</span>
           <span className="flex items-center gap-1 shrink-0">
